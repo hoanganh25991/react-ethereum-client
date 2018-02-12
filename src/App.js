@@ -167,7 +167,26 @@ class App extends Component {
     })
   }
 
+  activateExperiment = () => {
+    const {ContractInstance} = this.state
+    ContractInstance.setExperimentInMotion({
+      gas: 300000,
+      from: window.web3.eth.accounts[0],
+      value: window.web3.toWei(0.01, 'ether')
+    }, (err, result) => {
+      if (err) console.error("[setExperimentInMotion][ERR]", err)
+      console.log("[activateExperiment]", result)
+    })
+  }
+
   render() {
+    const {ContractInstance} = this.state
+    const experimentEvent = ContractInstance.ExperimentComplete();
+    experimentEvent && experimentEvent.watch((err, event) => {
+      if(err) console.error("[experimentEvent][ERR]", err)
+      console.log("[experimentEvent]", event);
+    })
+
     return (
       <div className="App">
         <header className="App-header">
@@ -192,12 +211,12 @@ class App extends Component {
           />
           <button type={"submit"}>Submit</button>
         </form>
-        <br/>
-        <br/>
-        <button onClick={this.queryConditionalResult}>Query Smart Contract Conditional Result</button>
-        <br/>
+        {/*<br/>*/}
         <br/>
         <button onClick={this.queryConditionalResult}>Query Smart Contract Conditional Result</button>
+        <br/>
+        <br/>
+        <button onClick={this.activateExperiment}>Start Experiment On Smart Contract</button>
       </div>
     );
   }
