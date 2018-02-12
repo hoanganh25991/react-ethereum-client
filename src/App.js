@@ -7,23 +7,9 @@ class App extends Component {
     super(props);
     const MyContract =  window.web3.eth.contract([
       {
-        "constant": false,
-        "inputs": [],
-        "name": "setExperimentInMotion",
-        "outputs": [
-          {
-            "name": "",
-            "type": "bool"
-          }
-        ],
-        "payable": true,
-        "stateMutability": "payable",
-        "type": "function"
-      },
-      {
         "constant": true,
         "inputs": [],
-        "name": "getState",
+        "name": "you_awesome",
         "outputs": [
           {
             "name": "",
@@ -35,15 +21,6 @@ class App extends Component {
         "type": "function"
       },
       {
-        "constant": false,
-        "inputs": [],
-        "name": "kill",
-        "outputs": [],
-        "payable": false,
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
         "constant": true,
         "inputs": [],
         "name": "pseudoRandomResult",
@@ -51,6 +28,20 @@ class App extends Component {
           {
             "name": "",
             "type": "bool"
+          }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "constant": true,
+        "inputs": [],
+        "name": "getState",
+        "outputs": [
+          {
+            "name": "",
+            "type": "string"
           }
         ],
         "payable": false,
@@ -72,6 +63,41 @@ class App extends Component {
         "type": "function"
       },
       {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": false,
+            "name": "result",
+            "type": "bool"
+          }
+        ],
+        "name": "ExperimentComplete",
+        "type": "event"
+      },
+      {
+        "constant": false,
+        "inputs": [],
+        "name": "kill",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "constant": false,
+        "inputs": [],
+        "name": "setExperimentInMotion",
+        "outputs": [
+          {
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "payable": true,
+        "stateMutability": "payable",
+        "type": "function"
+      },
+      {
         "constant": false,
         "inputs": [
           {
@@ -86,20 +112,6 @@ class App extends Component {
         "type": "function"
       },
       {
-        "constant": true,
-        "inputs": [],
-        "name": "you_awesome",
-        "outputs": [
-          {
-            "name": "",
-            "type": "string"
-          }
-        ],
-        "payable": false,
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
         "inputs": [],
         "payable": false,
         "stateMutability": "nonpayable",
@@ -109,24 +121,15 @@ class App extends Component {
         "payable": true,
         "stateMutability": "payable",
         "type": "fallback"
-      },
-      {
-        "anonymous": false,
-        "inputs": [
-          {
-            "indexed": false,
-            "name": "result",
-            "type": "bool"
-          }
-        ],
-        "name": "ExperimentComplete",
-        "type": "event"
       }
     ]);
+
     this.state = {
-      ContractInstance: MyContract.at("0x30287c240d2fc78e70d6f3884698f9e07e45262f"),
-      contractState: ''
+      ContractInstance: MyContract.at("0xf70e33ea24c8018602f61efc61909e0ad0488c55"),
+      contractState: '',
     }
+
+    this.state.event = this.state.ContractInstance.ExperimentComplete();
   }
 
   querySecret = () => {
@@ -180,11 +183,11 @@ class App extends Component {
   }
 
   render() {
-    const {ContractInstance} = this.state
-    const experimentEvent = ContractInstance.ExperimentComplete();
-    experimentEvent && experimentEvent.watch((err, event) => {
+    const {event} = this.state
+
+    event.watch((err, result) => {
       if(err) console.error("[experimentEvent][ERR]", err)
-      console.log("[experimentEvent]", event);
+      console.log("[experimentEvent]", result);
     })
 
     return (
