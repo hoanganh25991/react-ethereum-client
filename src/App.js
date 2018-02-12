@@ -7,9 +7,23 @@ class App extends Component {
     super(props);
     const MyContract =  window.web3.eth.contract([
       {
+        "constant": false,
+        "inputs": [],
+        "name": "setExperimentInMotion",
+        "outputs": [
+          {
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "payable": true,
+        "stateMutability": "payable",
+        "type": "function"
+      },
+      {
         "constant": true,
         "inputs": [],
-        "name": "you_awesome",
+        "name": "getState",
         "outputs": [
           {
             "name": "",
@@ -21,13 +35,22 @@ class App extends Component {
         "type": "function"
       },
       {
+        "constant": false,
+        "inputs": [],
+        "name": "kill",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
         "constant": true,
         "inputs": [],
-        "name": "getState",
+        "name": "pseudoRandomResult",
         "outputs": [
           {
             "name": "",
-            "type": "string"
+            "type": "bool"
           }
         ],
         "payable": false,
@@ -50,15 +73,6 @@ class App extends Component {
       },
       {
         "constant": false,
-        "inputs": [],
-        "name": "kill",
-        "outputs": [],
-        "payable": false,
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "constant": false,
         "inputs": [
           {
             "name": "newState",
@@ -72,6 +86,20 @@ class App extends Component {
         "type": "function"
       },
       {
+        "constant": true,
+        "inputs": [],
+        "name": "you_awesome",
+        "outputs": [
+          {
+            "name": "",
+            "type": "string"
+          }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
         "inputs": [],
         "payable": false,
         "stateMutability": "nonpayable",
@@ -81,10 +109,22 @@ class App extends Component {
         "payable": true,
         "stateMutability": "payable",
         "type": "fallback"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": false,
+            "name": "result",
+            "type": "bool"
+          }
+        ],
+        "name": "ExperimentComplete",
+        "type": "event"
       }
     ]);
     this.state = {
-      ContractInstance: MyContract.at("0x92e0d973074527785d867ac6fbd03d8e53deb29b"),
+      ContractInstance: MyContract.at("0x30287c240d2fc78e70d6f3884698f9e07e45262f"),
       contractState: ''
     }
   }
@@ -119,6 +159,14 @@ class App extends Component {
       })
   }
 
+  queryConditionalResult = () => {
+    const {ContractInstance} = this.state;
+    ContractInstance.pseudoRandomResult((err, result) => {
+      if(err) console.error("[pseudoRandomResult][ERR]", err)
+      console.log("This is our contract's pseudoRandomResult:::", result)
+    })
+  }
+
   render() {
     return (
       <div className="App">
@@ -144,6 +192,12 @@ class App extends Component {
           />
           <button type={"submit"}>Submit</button>
         </form>
+        <br/>
+        <br/>
+        <button onClick={this.queryConditionalResult}>Query Smart Contract Conditional Result</button>
+        <br/>
+        <br/>
+        <button onClick={this.queryConditionalResult}>Query Smart Contract Conditional Result</button>
       </div>
     );
   }
