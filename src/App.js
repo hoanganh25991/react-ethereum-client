@@ -4,6 +4,7 @@ import './App.css';
 import FD_NewPolicyJson from "./built-contracts/FlightDelayNewPolicy.json"
 
 const _ = console.log
+const web3 = window.web3;
 
 class App extends Component {
   constructor(props){
@@ -13,6 +14,7 @@ class App extends Component {
 
     this.state = {
       FD_NewPolicy: FD_NewPolicy.at("0x29f70a7278dc2dfdce8767cf8302f22fea4191dc"),
+      transactionHash: "",
     }
     // this.state.event = this.state.FD_NewPolicy.ExperimentComplete();
   }
@@ -68,7 +70,6 @@ class App extends Component {
   // }
 
   toUnixTime = () => {
-    const web3 = window.web3;
     const acc1 = web3.eth.accounts[0];
     const {FD_NewPolicy} = this.state;
     _("[FD_NewPolicy]", FD_NewPolicy);
@@ -84,14 +85,11 @@ class App extends Component {
   }
 
   createNewPolicy = () => {
-    const web3 = window.web3;
-
     const {FD_NewPolicy} = this.state;
-
     _("[FD_NewPolicy]", FD_NewPolicy);
 
     FD_NewPolicy.newPolicy(
-      "HA/20",
+      "HA/21",
       "/dep/2018/03/01",
       1519872471,
       1519872971,
@@ -100,11 +98,26 @@ class App extends Component {
       {
         gas: 600000,
         from: web3.eth.accounts[0],
-        value: web3.toWei(0.01, 'ether')
+        value: web3.toWei(1, 'ether')
       }
     , (err, result) => {
       if(err) return _(`${err}`)
       return _(result)
+    })
+  }
+
+  storeTransactionHash = e => {
+    const transactionHash = e.target.value;
+    this.setState({transactionHash})
+  }
+
+  checkHash = () => {
+    const eth = web3.eth;
+    const {transactionHash} = this.state;
+
+    eth.getTransactionReceipt(transactionHash, (err, result) => {
+      if(err) return _("[getTransaction][ERR]", err)
+      return _("[getTransaction][result]", result)
     })
   }
 
@@ -145,8 +158,21 @@ class App extends Component {
         {/*<br/>*/}
         {/*<br/>*/}
         {/*<button onClick={this.activateExperiment}>Start Experiment On Smart Contract</button>*/}
-        <button onClick={this.toUnixTime}>To Unix Time</button>
-        <button onClick={this.createNewPolicy}>Create New Policy</button>
+        <div>
+          <button onClick={this.toUnixTime}>To Unix Time</button>
+        </div>
+        <div>
+          <button onClick={this.createNewPolicy}>Create New Policy</button>
+        </div>
+        <div>
+          <input
+            type={"text"}
+            placeholder={"Transaction Hash"}
+            value={this.state.transactionHash}
+            onChange={this.storeTransactionHash}
+          />
+          <button onClick={this.checkHash}>Check Hash</button>
+        </div>
       </div>
     );
   }
