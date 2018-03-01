@@ -1,3 +1,11 @@
+const _10px = 10;
+
 export const style = {
-  root: ""
+  rootDiv: {
+    display: "flex",
+    padding: _10px,
+  },
+  padding: {
+    padding: _10px,
+  }
 }
