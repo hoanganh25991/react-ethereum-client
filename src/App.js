@@ -12,7 +12,7 @@ class App extends Component {
     const FD_NewPolicy =  window.web3.eth.contract(abi);
 
     this.state = {
-      FD_NewPolicy: FD_NewPolicy.at("0x1b3a3ad2137df3b141e483884ee7181372851ced"),
+      FD_NewPolicy: FD_NewPolicy.at("0x29f70a7278dc2dfdce8767cf8302f22fea4191dc"),
     }
     // this.state.event = this.state.FD_NewPolicy.ExperimentComplete();
   }
@@ -73,9 +73,10 @@ class App extends Component {
     const {FD_NewPolicy} = this.state;
     _("[FD_NewPolicy]", FD_NewPolicy);
 
-    FD_NewPolicy.toUnixtime("0x2f6465702f323031382f30322f3232", {
+    FD_NewPolicy.toUnixtime("/dep/2018/02/22", {
       gas: 600000,
       from: acc1,
+      // value: web3.toWei(1, "ether")
     }, (err, result) => {
       if(err) return _(`${err}`)
       return _(`[i.toUnixtime][result][rawStr]`, result, result.toString());
@@ -89,14 +90,22 @@ class App extends Component {
 
     _("[FD_NewPolicy]", FD_NewPolicy);
 
-    // FD_NewPolicy.newPolicy(1,2,3,4,5, {
-    //   gas: 600000,
-    //   from: web3.eth.accounts[0],
-    //   value: web3.toWei(0.01, 'ether')
-    // }, (err, result) => {
-    //   if(err) return _(`${err}`)
-    //   return _(result)
-    // })
+    FD_NewPolicy.newPolicy(
+      "HA/20",
+      "/dep/2018/03/01",
+      1519872471,
+      1519872971,
+      0,
+      "react-client",
+      {
+        gas: 600000,
+        from: web3.eth.accounts[0],
+        value: web3.toWei(0.01, 'ether')
+      }
+    , (err, result) => {
+      if(err) return _(`${err}`)
+      return _(result)
+    })
   }
 
   render() {
