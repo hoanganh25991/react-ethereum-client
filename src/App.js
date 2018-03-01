@@ -1,22 +1,43 @@
-import React, { Component } from 'react';
-import logo from './logo.svg';
 import './App.css';
+import moment from "moment"
+import logo from './logo.svg';
+import React, { Component } from 'react';
 import FD_NewPolicyJson from "./built-contracts/FlightDelayNewPolicy.json"
 
 const _ = console.log
 const web3 = window.web3;
+const eth = web3.eth;
+const acc1TotalEth = 10;
 
 class App extends Component {
   constructor(props){
     super(props);
     const {abi} = FD_NewPolicyJson;
-    const FD_NewPolicy =  window.web3.eth.contract(abi);
+    const FD_NewPolicyAbi = window.web3.eth.contract(abi);
+    const FD_NewPolicy = FD_NewPolicyAbi.at("0x29f70a7278dc2dfdce8767cf8302f22fea4191dc");
+
+    this.watchNewPolicyEvent(FD_NewPolicy);
 
     this.state = {
-      FD_NewPolicy: FD_NewPolicy.at("0x29f70a7278dc2dfdce8767cf8302f22fea4191dc"),
+      FD_NewPolicy,
       transactionHash: "",
+      address: "",
     }
     // this.state.event = this.state.FD_NewPolicy.ExperimentComplete();
+  }
+
+  watchNewPolicyEvent = FD_NewPolicy => {
+    // const newPolicyEvent = FD_NewPolicy.LogPolicyDeclined({fromBlock: 0, toBlock: 'latest'});
+    // newPolicyEvent.watch((err, result) => {
+    //   if(err) return _("[LogPolicyDeclined][ERR]", err)
+    //   _("[LogPolicyDeclined]", result)
+    // });
+
+    const events = FD_NewPolicy.allEvents({fromBlock: 0, toBlock: 'latest'});
+    events.watch((err, result) => {
+      if(err) return _("[LogEvent][ERR]", err)
+      _("[LogEvent]", result)
+    })
   }
 
   // querySecret = () => {
@@ -88,17 +109,24 @@ class App extends Component {
     const {FD_NewPolicy} = this.state;
     _("[FD_NewPolicy]", FD_NewPolicy);
 
+    const now = moment();
+    const nowInTimestamp = +now.format("X")
+    const departureTime = nowInTimestamp + 100;
+    const arrivalTime = departureTime + 90;
+
+    _("[createNewPolicy][departureTime, arrivalTime]", departureTime, arrivalTime);
+
     FD_NewPolicy.newPolicy(
-      "HA/21",
+      "HA/22",
       "/dep/2018/03/01",
-      1519872471,
-      1519872971,
+      departureTime,
+      arrivalTime,
       0,
-      "react-client",
+      "12345",
       {
-        gas: 600000,
+        gas: 4476768,
         from: web3.eth.accounts[0],
-        value: web3.toWei(1, 'ether')
+        value: web3.toWei(0.06, 'ether')
       }
     , (err, result) => {
       if(err) return _(`${err}`)
@@ -112,12 +140,34 @@ class App extends Component {
   }
 
   checkHash = () => {
-    const eth = web3.eth;
     const {transactionHash} = this.state;
 
     eth.getTransactionReceipt(transactionHash, (err, result) => {
+      if(err) return _("[getTransactionReceipt][ERR]", err)
+      return _("[getTransactionReceipt][result]", result)
+    })
+
+    eth.getTransaction(transactionHash, (err, result) => {
       if(err) return _("[getTransaction][ERR]", err)
       return _("[getTransaction][result]", result)
+    })
+  }
+
+  storeAddress = e => {
+    const address = e.target.value;
+    this.setState({address})
+  }
+
+  checkBalance = () => {
+    const {address} = this.state;
+
+    eth.getBalance(address, (err, result) => {
+      if(err) return _("[getBalance][ERR]", result)
+      const ether = web3.fromWei(result, "ether").toString();
+      _("[getBalance][result][ether]", result, ether)
+
+      const spend = acc1TotalEth - (+ether);
+      return _("[getBalance][spend]", spend)
     })
   }
 
@@ -172,6 +222,15 @@ class App extends Component {
             onChange={this.storeTransactionHash}
           />
           <button onClick={this.checkHash}>Check Hash</button>
+        </div>
+        <div>
+          <input
+            type={"text"}
+            placeholder={"Address"}
+            value={this.state.address}
+            onChange={this.storeAddress}
+          />
+          <button onClick={this.checkBalance}>Check Balance</button>
         </div>
       </div>
     );
