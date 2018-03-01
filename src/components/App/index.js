@@ -1,15 +1,20 @@
-import './App.css';
+import './style.css';
 import moment from "moment"
 import logo from './logo.svg';
-import React, { Component } from 'react';
-import FD_NewPolicyJson from "./built-contracts/FlightDelayNewPolicy.json"
+import { style as s } from "./style"
+import TextField from "material-ui/TextField"
+import DatePicker from 'material-ui/DatePicker';
+import RaisedButton from "material-ui/RaisedButton"
+import React, { Component, Fragment, PureComponent } from 'react';
+import MuiThemeProvider from "material-ui/styles/MuiThemeProvider"
+import FD_NewPolicyJson from "./../../built-contracts/FlightDelayNewPolicy.json"
 
 const _ = console.log
 const web3 = window.web3;
 const eth = web3.eth;
 const acc1TotalEth = 10;
 
-class App extends Component {
+export default class App extends Component {
   constructor(props){
     super(props);
     const {abi} = FD_NewPolicyJson;
@@ -128,10 +133,10 @@ class App extends Component {
         from: web3.eth.accounts[0],
         value: web3.toWei(0.06, 'ether')
       }
-    , (err, result) => {
-      if(err) return _(`${err}`)
-      return _(result)
-    })
+      , (err, result) => {
+        if(err) return _(`${err}`)
+        return _(result)
+      })
   }
 
   storeTransactionHash = e => {
@@ -180,61 +185,65 @@ class App extends Component {
     // })
 
     return (
-      <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <h1 className="App-title">React & Ethereum Clients</h1>
-        </header>
-        <br/>
-        <br/>
-        {/*<button onClick={this.querySecret}>Query Smart Contract's Secret</button>*/}
-        {/*<br/>*/}
-        {/*<br/>*/}
-        {/*<button onClick={this.queryContractState}>Query Smart Contract's State</button>*/}
-        {/*<br/>*/}
-        {/*<br/>*/}
-        {/*<form onSubmit={this.handleContractStateSubmit}>*/}
+      <MuiThemeProvider>
+        <div className="App">
+          <header className="App-header">
+            <img src={logo} className="App-logo" alt="logo" />
+            <h1 className="App-title">React & Ethereum Clients</h1>
+          </header>
+          <br/>
+          <br/>
+          {/*<button onClick={this.querySecret}>Query Smart Contract's Secret</button>*/}
+          {/*<br/>*/}
+          {/*<br/>*/}
+          {/*<button onClick={this.queryContractState}>Query Smart Contract's State</button>*/}
+          {/*<br/>*/}
+          {/*<br/>*/}
+          {/*<form onSubmit={this.handleContractStateSubmit}>*/}
           {/*<input*/}
-            {/*type={"text"}*/}
-            {/*name={"state-change"}*/}
-            {/*placeholder={"Enter new state..."}*/}
-            {/*value={this.state.contractState}*/}
-            {/*onChange={e => this.setState({contractState: e.target.value})}*/}
+          {/*type={"text"}*/}
+          {/*name={"state-change"}*/}
+          {/*placeholder={"Enter new state..."}*/}
+          {/*value={this.state.contractState}*/}
+          {/*onChange={e => this.setState({contractState: e.target.value})}*/}
           {/*/>*/}
           {/*<button type={"submit"}>Submit</button>*/}
-        {/*</form>*/}
-        {/*<br/>*/}
-        {/*<button onClick={this.queryConditionalResult}>Query Smart Contract Conditional Result</button>*/}
-        {/*<br/>*/}
-        {/*<br/>*/}
-        {/*<button onClick={this.activateExperiment}>Start Experiment On Smart Contract</button>*/}
-        <div>
-          <button onClick={this.toUnixTime}>To Unix Time</button>
+          {/*</form>*/}
+          {/*<br/>*/}
+          {/*<button onClick={this.queryConditionalResult}>Query Smart Contract Conditional Result</button>*/}
+          {/*<br/>*/}
+          {/*<br/>*/}
+          {/*<button onClick={this.activateExperiment}>Start Experiment On Smart Contract</button>*/}
+          <div>
+            <button onClick={this.toUnixTime}>To Unix Time</button>
+          </div>
+          <div>
+            <button onClick={this.createNewPolicy}>Create New Policy</button>
+          </div>
+          <div>
+            <input
+              type={"text"}
+              placeholder={"Transaction Hash"}
+              value={this.state.transactionHash}
+              onChange={this.storeTransactionHash}
+            />
+            <button onClick={this.checkHash}>Check Hash</button>
+          </div>
+          <div>
+            <input
+              type={"text"}
+              placeholder={"Address"}
+              value={this.state.address}
+              onChange={this.storeAddress}
+            />
+            <button onClick={this.checkBalance}>Check Balance</button>
+            <RaisedButton
+              label={"Check Balance"}
+              primary={true}
+              onClick={this.checkBalance} />
+          </div>
         </div>
-        <div>
-          <button onClick={this.createNewPolicy}>Create New Policy</button>
-        </div>
-        <div>
-          <input
-            type={"text"}
-            placeholder={"Transaction Hash"}
-            value={this.state.transactionHash}
-            onChange={this.storeTransactionHash}
-          />
-          <button onClick={this.checkHash}>Check Hash</button>
-        </div>
-        <div>
-          <input
-            type={"text"}
-            placeholder={"Address"}
-            value={this.state.address}
-            onChange={this.storeAddress}
-          />
-          <button onClick={this.checkBalance}>Check Balance</button>
-        </div>
-      </div>
+      </MuiThemeProvider>
     );
   }
 }
-
-export default App;
