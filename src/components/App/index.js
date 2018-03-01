@@ -9,11 +9,18 @@ import Paper from "material-ui/Paper"
 import React, { Component, Fragment, PureComponent } from 'react';
 import MuiThemeProvider from "material-ui/styles/MuiThemeProvider"
 import FD_NewPolicyJson from "./../../built-contracts/FlightDelayNewPolicy.json"
+import SelectField from 'material-ui/SelectField';
+import MenuItem from 'material-ui/MenuItem';
 
 const _ = console.log
 const web3 = window.web3;
 const eth = web3.eth;
 const acc1TotalEth = 10;
+
+const items = [];
+for (let i = 0; i < 100; i++ ) {
+  items.push(<MenuItem value={i} key={i} primaryText={`Item ${i}`} />);
+}
 
 export default class App extends Component {
   constructor(props){
@@ -28,6 +35,8 @@ export default class App extends Component {
       FD_NewPolicy,
       transactionHash: "",
       address: "",
+      departureAirport: "",
+      arrivalAirport: "",
     }
   }
 
@@ -128,45 +137,86 @@ export default class App extends Component {
     })
   }
 
+  storeDepartureAirport = (e, index, value) => {
+    const departureAirport = value;
+    this.setState({departureAirport});
+  }
+
+  storeArrivalAirport = (e, index, value) => {
+    const arrivalAirport = value;
+    this.setState({arrivalAirport})
+  }
+
   render() {
+    const {departureAirport, arrivalAirport} = this.state;
+
     return (
       <MuiThemeProvider>
-        <div className="App">
-          <header className="App-header">
-            <img src={logo} className="App-logo" alt="logo" />
-            <h1 className="App-title">React & Ethereum Clients</h1>
-          </header>
+        <div>
+          <div className="App">
+            <header className="App-header">
+              <img src={logo} className="App-logo" alt="logo" />
+              <h1 className="App-title">React & Ethereum Clients</h1>
+            </header>
+          </div>
           <div style={s.rootDiv}>
             <Paper zDepth={1} style={s.padding}>
-              <div>
-                <button onClick={this.toUnixTime}>To Unix Time</button>
-              </div>
-              <div>
-                <button onClick={this.createNewPolicy}>Create New Policy</button>
-              </div>
-              <div>
-                <input
-                  type={"text"}
-                  placeholder={"Transaction Hash"}
-                  value={this.state.transactionHash}
-                  onChange={this.storeTransactionHash}
+              <div style={s.newPolicyTitle}>Create New Policy</div>
+              <div style={s.policyParamsDiv}>
+                <TextField
+                  floatingLabelText="Full Name"
                 />
-                <button onClick={this.checkHash}>Check Hash</button>
+                <TextField
+                  floatingLabelText="Email"
+                />
+                <SelectField
+                  value={departureAirport}
+                  onChange={this.storeDepartureAirport}
+                  floatingLabelText={"From"}
+                  maxHeight={s.selectDiv.height}
+                >
+                  {items}
+                </SelectField>
+                <SelectField
+                  value={arrivalAirport}
+                  onChange={this.storeArrivalAirport}
+                  floatingLabelText={"To"}
+                  maxHeight={s.selectDiv.height}
+                >
+                  {items}
+                </SelectField>
+                <DatePicker
+                  floatingLabelText="Departure Date"/>
+                <TextField
+                  floatingLabelText="Premium"
+                />
               </div>
               <div>
-                <input
-                  type={"text"}
-                  placeholder={"Address"}
-                  value={this.state.address}
-                  onChange={this.storeAddress}
-                />
-                <button onClick={this.checkBalance}>Check Balance</button>
                 <RaisedButton
-                  label={"Check Balance"}
+                  label={"Apply"}
                   primary={true}
-                  onClick={this.checkBalance} />
+                  onClick={this.createNewPolicy} />
               </div>
             </Paper>
+          </div>
+          <button onClick={this.toUnixTime}>To Unix Time</button>
+          <div>
+            <input
+              type={"text"}
+              placeholder={"Transaction Hash"}
+              value={this.state.transactionHash}
+              onChange={this.storeTransactionHash}
+            />
+            <button onClick={this.checkHash}>Check Hash</button>
+          </div>
+          <div>
+            <input
+              type={"text"}
+              placeholder={"Address"}
+              value={this.state.address}
+              onChange={this.storeAddress}
+            />
+            <button onClick={this.checkBalance}>Check Balance</button>
           </div>
         </div>
       </MuiThemeProvider>
