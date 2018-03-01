@@ -191,7 +191,8 @@ export default class App extends Component {
                   floatingLabelText="Premium"
                 />
               </div>
-              <div>
+              <div style={s.applyBtnDiv}>
+                <div style={s.applySpaceDiv}/>
                 <RaisedButton
                   label={"Apply"}
                   primary={true}
