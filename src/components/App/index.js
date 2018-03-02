@@ -87,7 +87,7 @@ export default class App extends Component {
     // First run
     this.getBalance()
     this.watchBalance()
-    this.setUpClock()
+    setTimeout(() => this.setUpClock(), 1000)
   }
 
   getBalance = () => {
@@ -126,7 +126,7 @@ export default class App extends Component {
     setInterval(() => {
       const clock = new Date().getTime()
       this.setState({ clock })
-    }, 500)
+    }, 300)
   }
 
   watchNewPolicyEvent = contract => {
@@ -443,7 +443,6 @@ export default class App extends Component {
     const total = arrivalTime - departureTime
     const progress = nowTimestamp - departureTime
     const percent = progress / total * 100
-    _("[percent]", percent)
     return percent
   }
 
