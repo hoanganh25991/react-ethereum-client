@@ -16,6 +16,7 @@ import { List, ListItem } from "material-ui/List"
 import Subheader from "material-ui/Subheader"
 import AssignMent from "material-ui/svg-icons/action/assignment"
 import HashIds from "hashids"
+import CircularProgress from "material-ui/CircularProgress"
 
 const _ = console.log
 const web3 = window.web3
@@ -70,6 +71,7 @@ export default class App extends Component {
       transactionHash: "",
       address: "",
       block: "",
+      pending: false,
 
       // Policy Params
       fullName: "",
@@ -254,6 +256,9 @@ export default class App extends Component {
   createNewPolicy = () => {
     const { carrierFlightNumber, premium } = this.state
 
+    const pending = true
+    this.setState({ pending })
+
     const { FD_NewPolicy } = this.state
     _("[FD_NewPolicy]", FD_NewPolicy)
 
@@ -292,28 +297,35 @@ export default class App extends Component {
 
         const eventWait = this.checkPolicyAppliedOrDeclineByEvent(txHash)
 
-        eventWait.then(event => {
-          if (!event) return _("No LogPolicyApplied")
-          _("[createNewPolicy][LogPolicyApplied]", event)
+        const doneWait = eventWait
+          .then(event => {
+            if (!event) return _("No LogPolicyApplied")
+            _("[createNewPolicy][LogPolicyApplied]", event)
 
-          const e1 = event
-          if (!e1) return _("[createNewPolicy][e1]", e1)
+            const e1 = event
+            if (!e1) return _("[createNewPolicy][e1]", e1)
 
-          const { args } = e1
-          const { _policyId } = args
-          const { fullName, email } = this.state
+            const { args } = e1
+            const { _policyId } = args
+            const { fullName, email } = this.state
 
-          const certificate = {
-            policyId: fdHash.encode(_policyId),
-            carrierFlightNumber,
-            departureDate,
-            departureTime,
-            arrivalTime,
-            fullName,
-            email
-          }
+            const certificate = {
+              policyId: fdHash.encode(_policyId),
+              carrierFlightNumber,
+              departureDate,
+              departureTime,
+              arrivalTime,
+              fullName,
+              email
+            }
 
-          _("[createNewPolicy][certificate]", certificate)
+            _("[createNewPolicy][certificate]", certificate)
+          })
+          .catch(err => err)
+
+        doneWait.then(() => {
+          const pending = false
+          this.setState({ pending })
         })
       }
     )
@@ -322,7 +334,10 @@ export default class App extends Component {
   checkPolicyAppliedOrDeclineByEvent = txHash => {
     return new Promise((resolve, reject) => {
       eth.getTransactionReceipt(txHash, (err, result) => {
-        if (err) return _(err.message)
+        if (err) {
+          _(err.message)
+          return reject(null)
+        }
 
         const { blockNumber } = result
         _("[checkPolicyAppliedOrDeclineByEvent][blockNumber]", blockNumber)
@@ -331,7 +346,11 @@ export default class App extends Component {
         const events = FD_NewPolicy.LogPolicyApplied({ fromBlock: blockNumber, toBlock: blockNumber })
 
         events.watch((err, result) => {
-          if (err) return reject(null)
+          if (err) {
+            _(err.message)
+            return reject(null)
+          }
+
           resolve(result)
         })
       })
@@ -374,7 +393,7 @@ export default class App extends Component {
   }
 
   render() {
-    const { departureAirport, arrivalAirport, carrierFlightNumber, availableFlights, policies } = this.state
+    const { departureAirport, arrivalAirport, carrierFlightNumber, availableFlights, policies, pending } = this.state
 
     return (
       <MuiThemeProvider>
@@ -388,6 +407,11 @@ export default class App extends Component {
           <div style={s.rootDiv}>
             {/* New Policy */}
             <Paper zDepth={1} style={s.newPolicyRoot}>
+              {pending && (
+                <div style={s.newPolicyPending}>
+                  <CircularProgress size={60} thickness={7} />
+                </div>
+              )}
               <div style={s.newPolicyTitle}>Create New Policy</div>
               <div style={s.policyParamsDiv}>
                 <TextField floatingLabelText={"Full Name"} value={this.fullName} onChange={this.storeFullName} />
