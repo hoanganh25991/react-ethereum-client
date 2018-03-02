@@ -18,6 +18,8 @@ import HashIds from "hashids"
 import CircularProgress from "material-ui/CircularProgress"
 import { Table, TableBody, TableHeader, TableHeaderColumn, TableRow, TableRowColumn } from "material-ui/Table"
 import FD_LedgerJson from "./../../built-contracts/FlightDelayLedger.json"
+import { Tabs, Tab } from "material-ui/Tabs"
+import LinearProgress from "material-ui/LinearProgress"
 
 const _ = console.log
 const web3 = window.web3
@@ -105,13 +107,15 @@ export default class App extends Component {
   watchBalance = () => {
     const { FD_Ledger } = this.state
 
-    FD_Ledger.LogReceiveFunds().watch(err => {
+    FD_Ledger.LogReceiveFunds({ fromBlock: 0, toBlock: "latest" }).watch((err, result) => {
       if (err) return
+      _("[watchBalance][LogReceiveFunds]", result)
       this.getBalance()
     })
 
-    FD_Ledger.LogSendFunds().watch(err => {
+    FD_Ledger.LogSendFunds({ fromBlock: 0, toBlock: "latest" }).watch((err, result) => {
       if (err) return
+      _("[watchBalance][LogReceiveFunds]", result)
       this.getBalance()
     })
   }
@@ -448,128 +452,147 @@ export default class App extends Component {
               <h1 className="App-title">React & Ethereum Clients</h1>
             </header>
           </div>
-          <div style={s.rootDiv}>
-            {/* New Policy */}
-            <Paper zDepth={1} style={s.newPolicyRoot}>
-              {pending && (
-                <div style={s.newPolicyPending}>
-                  <CircularProgress size={60} thickness={7} />
+
+          <Tabs>
+            <Tab label="Dashboard">
+              <div style={s.rootDiv}>
+                {/* New Policy */}
+                <Paper zDepth={1} style={s.newPolicyRoot}>
+                  {pending && (
+                    <div style={s.newPolicyPending}>
+                      <CircularProgress size={60} thickness={7} />
+                    </div>
+                  )}
+                  <div style={s.newPolicyTitle}>Create New Policy</div>
+                  <div style={s.policyParamsDiv}>
+                    <TextField floatingLabelText={"Full Name"} value={this.fullName} onChange={this.storeFullName} />
+                    <TextField floatingLabelText={"Email"} value={this.email} onChange={this.storeEmail} />
+                    <SelectField
+                      value={departureAirport}
+                      onChange={this.storeDepartureAirport}
+                      floatingLabelText={"From"}
+                      maxHeight={s.selectDiv.height}
+                    >
+                      {selectAirports}
+                    </SelectField>
+                    <SelectField
+                      value={arrivalAirport}
+                      onChange={this.storeArrivalAirport}
+                      floatingLabelText={"To"}
+                      maxHeight={s.selectDiv.height}
+                    >
+                      {selectAirports}
+                    </SelectField>
+                    <DatePicker floatingLabelText="Departure Date" onChange={this.storeDepartureDate} />
+                    <SelectField
+                      value={carrierFlightNumber}
+                      onChange={this.storeCarrierFlightNumber}
+                      floatingLabelText={"Carrier Flight Number"}
+                      maxHeight={s.selectDiv.height}
+                    >
+                      {availableFlights.map(flight => {
+                        const { name, code } = flight
+                        return <MenuItem value={code} key={code} primaryText={name} />
+                      })}
+                    </SelectField>
+                    <TextField floatingLabelText={"Premium"} value={this.premium} onChange={this.storePremium} />
+                  </div>
+                  <div style={s.applyBtnDiv}>
+                    <div style={s.applySpaceDiv} />
+                    <RaisedButton label={"Apply"} primary={true} onClick={this.createNewPolicy} />
+                  </div>
+                </Paper>
+                {/* List Policy */}
+                <Paper zDepth={1} style={s.listPolicyRoot}>
+                  <div style={s.listPolicyTitle}>Policy List</div>
+                  <List>
+                    {policies.map(policy => {
+                      const { policyId, fullName, carrierFlightNumber, departureDate } = policy
+                      const policyBrief = `${fullName} - ${carrierFlightNumber} : ${departureDate}`
+
+                      return (
+                        <ListItem
+                          key={policyId}
+                          primaryText={policyId}
+                          secondaryText={policyBrief}
+                          leftIcon={<AssignMent />}
+                        >
+                          <div style={s.flightProgressDiv}>
+                            <LinearProgress mode="determinate" value={80} />
+                          </div>
+                        </ListItem>
+                      )
+                    })}
+                  </List>
+                </Paper>
+                {/* Account Balance */}
+                <Paper zDepth={1} style={s.accountBalanceRoot}>
+                  <div style={s.accountBalanceTitle}>Account Balance</div>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHeaderColumn>Name</TableHeaderColumn>
+                        <TableHeaderColumn>Balance</TableHeaderColumn>
+                        <TableHeaderColumn>Address</TableHeaderColumn>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody stripedRows={true}>
+                      <TableRow>
+                        <TableRowColumn>FD.Ledger</TableRowColumn>
+                        <TableRowColumn>{ledgerBalance}</TableRowColumn>
+                        <TableRowColumn>{ledgerAddress}</TableRowColumn>
+                      </TableRow>
+                      <TableRow>
+                        <TableRowColumn>Current User</TableRowColumn>
+                        <TableRowColumn>{customerBalance}</TableRowColumn>
+                        <TableRowColumn>{customerAddress}</TableRowColumn>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </Paper>
+              </div>
+            </Tab>
+            <Tab label="Debug">
+              <div>
+                <div style={s.oldDiv}>
+                  <button onClick={this.toUnixTime}>To Unix Time</button>
                 </div>
-              )}
-              <div style={s.newPolicyTitle}>Create New Policy</div>
-              <div style={s.policyParamsDiv}>
-                <TextField floatingLabelText={"Full Name"} value={this.fullName} onChange={this.storeFullName} />
-                <TextField floatingLabelText={"Email"} value={this.email} onChange={this.storeEmail} />
-                <SelectField
-                  value={departureAirport}
-                  onChange={this.storeDepartureAirport}
-                  floatingLabelText={"From"}
-                  maxHeight={s.selectDiv.height}
-                >
-                  {selectAirports}
-                </SelectField>
-                <SelectField
-                  value={arrivalAirport}
-                  onChange={this.storeArrivalAirport}
-                  floatingLabelText={"To"}
-                  maxHeight={s.selectDiv.height}
-                >
-                  {selectAirports}
-                </SelectField>
-                <DatePicker floatingLabelText="Departure Date" onChange={this.storeDepartureDate} />
-                <SelectField
-                  value={carrierFlightNumber}
-                  onChange={this.storeCarrierFlightNumber}
-                  floatingLabelText={"Carrier Flight Number"}
-                  maxHeight={s.selectDiv.height}
-                >
-                  {availableFlights.map(flight => {
-                    const { name, code } = flight
-                    return <MenuItem value={code} key={code} primaryText={name} />
-                  })}
-                </SelectField>
-                <TextField floatingLabelText={"Premium"} value={this.premium} onChange={this.storePremium} />
+                <div style={s.oldDiv}>
+                  <button onClick={this.createDefaultPolicy}>Create Default Policy</button>
+                </div>
+                <div style={s.oldDiv}>
+                  <input
+                    type={"text"}
+                    placeholder={"Transaction Hash"}
+                    value={this.state.transactionHash}
+                    onChange={this.storeTransactionHash}
+                  />
+                  <button onClick={this.checkHash}>Check Hash</button>
+                </div>
+                <div style={s.oldDiv}>
+                  <input
+                    type={"text"}
+                    placeholder={"Address"}
+                    value={this.state.address}
+                    onChange={this.storeAddress}
+                  />
+                  <button onClick={this.checkBalance}>Check Balance</button>
+                </div>
+                <div style={s.oldDiv}>
+                  <input
+                    type={"text"}
+                    placeholder={"Block Number"}
+                    value={this.state.block}
+                    onChange={this.storeBlock}
+                  />
+                  <button onClick={this.readNewPolicyEventAt}>Read NewPolicy Event</button>
+                </div>
+                <div style={s.oldDiv}>
+                  <button onClick={this.readNewPolicyAllEvents}>Read NewPolicy All Events</button>
+                </div>
               </div>
-              <div style={s.applyBtnDiv}>
-                <div style={s.applySpaceDiv} />
-                <RaisedButton label={"Apply"} primary={true} onClick={this.createNewPolicy} />
-              </div>
-            </Paper>
-            {/* List Policy */}
-            <Paper zDepth={1} style={s.listPolicyRoot}>
-              <div style={s.listPolicyTitle}>Policy List</div>
-              <List>
-                {policies.map(policy => {
-                  const { policyId, fullName, carrierFlightNumber, departureDate } = policy
-                  const policyBrief = `${fullName} - ${carrierFlightNumber} : ${departureDate}`
-
-                  return (
-                    <ListItem
-                      key={policyId}
-                      primaryText={policyId}
-                      secondaryText={policyBrief}
-                      leftIcon={<AssignMent />}
-                    />
-                  )
-                })}
-              </List>
-            </Paper>
-            {/* Account Balance */}
-            <Paper zDepth={1} style={s.accountBalanceRoot}>
-              <div style={s.accountBalanceTitle}>Account Balance</div>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHeaderColumn>Name</TableHeaderColumn>
-                    <TableHeaderColumn>Balance</TableHeaderColumn>
-                    <TableHeaderColumn>Address</TableHeaderColumn>
-                  </TableRow>
-                </TableHeader>
-                <TableBody stripedRows={true}>
-                  <TableRow>
-                    <TableRowColumn>FD.Ledger</TableRowColumn>
-                    <TableRowColumn>{ledgerBalance}</TableRowColumn>
-                    <TableRowColumn>{ledgerAddress}</TableRowColumn>
-                  </TableRow>
-                  <TableRow>
-                    <TableRowColumn>Current User</TableRowColumn>
-                    <TableRowColumn>{customerBalance}</TableRowColumn>
-                    <TableRowColumn>{customerAddress}</TableRowColumn>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </Paper>
-          </div>
-
-          {/* OLD CODE */}
-          <div>
-            <div style={s.oldDiv}>
-              <button onClick={this.toUnixTime}>To Unix Time</button>
-            </div>
-            <div style={s.oldDiv}>
-              <button onClick={this.createDefaultPolicy}>Create Default Policy</button>
-            </div>
-            <div style={s.oldDiv}>
-              <input
-                type={"text"}
-                placeholder={"Transaction Hash"}
-                value={this.state.transactionHash}
-                onChange={this.storeTransactionHash}
-              />
-              <button onClick={this.checkHash}>Check Hash</button>
-            </div>
-            <div style={s.oldDiv}>
-              <input type={"text"} placeholder={"Address"} value={this.state.address} onChange={this.storeAddress} />
-              <button onClick={this.checkBalance}>Check Balance</button>
-            </div>
-            <div style={s.oldDiv}>
-              <input type={"text"} placeholder={"Block Number"} value={this.state.block} onChange={this.storeBlock} />
-              <button onClick={this.readNewPolicyEventAt}>Read NewPolicy Event</button>
-            </div>
-            <div style={s.oldDiv}>
-              <button onClick={this.readNewPolicyAllEvents}>Read NewPolicy All Events</button>
-            </div>
-          </div>
+            </Tab>
+          </Tabs>
         </div>
       </MuiThemeProvider>
     )
