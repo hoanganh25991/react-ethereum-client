@@ -47,3 +47,26 @@ export const getCarrierFlightNumberInfo = carrierFlightNumber => {
     arrivalTime
   }
 }
+
+export const demoAirports = [
+  {
+    name: "AKL - Auckland, New Zealand Auckland International Airport",
+    code: "AKL"
+  },
+  {
+    name: "AMS - Amsterdam, Netherlands Schiphol",
+    code: "AMS"
+  },
+  {
+    name: "ATH - Athens, Greece - Venizelos",
+    code: "ATH"
+  },
+  {
+    name: "SIN - Singapore, Singapore Changi International Airport",
+    code: "SIN"
+  },
+  {
+    name: "HEL - Helsinki, Finland Helsinki",
+    code: "HEL"
+  }
+]

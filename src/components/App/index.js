@@ -11,12 +11,13 @@ import RaisedButton from "material-ui/RaisedButton"
 import React, { Component, Fragment, PureComponent } from "react"
 import MuiThemeProvider from "material-ui/styles/MuiThemeProvider"
 import FD_NewPolicyJson from "./../../built-contracts/FlightDelayNewPolicy.json"
-import { getScheduleByRoute, getCarrierFlightNumberInfo } from "./../../flightstats"
+import { demoAirports, getScheduleByRoute, getCarrierFlightNumberInfo } from "./../../flightstats"
 import { List, ListItem } from "material-ui/List"
-import Subheader from "material-ui/Subheader"
 import AssignMent from "material-ui/svg-icons/action/assignment"
 import HashIds from "hashids"
 import CircularProgress from "material-ui/CircularProgress"
+import { Table, TableBody, TableHeader, TableHeaderColumn, TableRow, TableRowColumn } from "material-ui/Table"
+import FD_LedgerJson from "./../../built-contracts/FlightDelayLedger.json"
 
 const _ = console.log
 const web3 = window.web3
@@ -27,28 +28,8 @@ const acc1 = web3.eth.accounts[0]
 let custom_alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 const fdHash = new HashIds("", 7, custom_alphabet)
 
-const demoAirports = [
-  {
-    name: "AKL - Auckland, New Zealand Auckland International Airport",
-    code: "AKL"
-  },
-  {
-    name: "AMS - Amsterdam, Netherlands Schiphol",
-    code: "AMS"
-  },
-  {
-    name: "ATH - Athens, Greece - Venizelos",
-    code: "ATH"
-  },
-  {
-    name: "SIN - Singapore, Singapore Changi International Airport",
-    code: "SIN"
-  },
-  {
-    name: "HEL - Helsinki, Finland Helsinki",
-    code: "HEL"
-  }
-]
+const newPolicyAddress = "0x29f70a7278dc2dfdce8767cf8302f22fea4191dc"
+const ledgerAddress = "0xd9a40b118f944bd5885da4e163fbfdda14707ffb"
 
 const selectAirports = demoAirports.map(airport => {
   const { name, code } = airport
@@ -58,20 +39,33 @@ const selectAirports = demoAirports.map(airport => {
 export default class App extends Component {
   constructor(props) {
     super(props)
-    const { abi } = FD_NewPolicyJson
-    const FD_NewPolicyAbi = window.web3.eth.contract(abi)
-    const FD_NewPolicy = FD_NewPolicyAbi.at("0x29f70a7278dc2dfdce8767cf8302f22fea4191dc")
+    const { abi: newPolicyAbi } = FD_NewPolicyJson
+    const { abi: ledgerAbi } = FD_LedgerJson
+
+    const FD_NewPolicyAbi = web3.eth.contract(newPolicyAbi)
+    const FD_NewPolicy = FD_NewPolicyAbi.at(newPolicyAddress)
+
+    const FD_LedgerAbi = web3.eth.contract(ledgerAbi)
+    const FD_Ledger = FD_LedgerAbi.at(ledgerAddress)
 
     // this.watchNewPolicyEvent(FD_NewPolicy);
     // this.watchPolicyEvent(FD_NewPolicy);
+    const customerAddress = acc1
 
     this.state = {
       // New Policy
       FD_NewPolicy,
+      FD_Ledger,
       transactionHash: "",
       address: "",
       block: "",
       pending: false,
+
+      // Account Balance
+      ledgerAddress,
+      ledgerBalance: null,
+      customerAddress,
+      customerBalance: null,
 
       // Policy Params
       fullName: "",
@@ -86,6 +80,40 @@ export default class App extends Component {
       // Policies
       policies: []
     }
+
+    // First run
+    this.getBalance()
+    this.watchBalance()
+  }
+
+  getBalance = () => {
+    const { ledgerAddress, customerAddress } = this.state
+
+    eth.getBalance(ledgerAddress, (err, result) => {
+      if (err) return
+      const ledgerBalance = web3.fromWei(result, "ether").toString()
+      this.setState({ ledgerBalance })
+    })
+
+    eth.getBalance(customerAddress, (err, result) => {
+      if (err) return
+      const customerBalance = web3.fromWei(result, "ether").toString()
+      this.setState({ customerBalance })
+    })
+  }
+
+  watchBalance = () => {
+    const { FD_Ledger } = this.state
+
+    FD_Ledger.LogReceiveFunds().watch(err => {
+      if (err) return
+      this.getBalance()
+    })
+
+    FD_Ledger.LogSendFunds().watch(err => {
+      if (err) return
+      this.getBalance()
+    })
   }
 
   watchNewPolicyEvent = contract => {
@@ -320,6 +348,11 @@ export default class App extends Component {
             }
 
             _("[createNewPolicy][certificate]", certificate)
+
+            // Update Policies
+            const { policies: curr } = this.state
+            const policies = [...curr, certificate]
+            this.setState({ policies })
           })
           .catch(err => err)
 
@@ -393,7 +426,18 @@ export default class App extends Component {
   }
 
   render() {
-    const { departureAirport, arrivalAirport, carrierFlightNumber, availableFlights, policies, pending } = this.state
+    const {
+      departureAirport,
+      arrivalAirport,
+      carrierFlightNumber,
+      availableFlights,
+      policies,
+      pending,
+      ledgerAddress,
+      ledgerBalance,
+      customerAddress,
+      customerBalance
+    } = this.state
 
     return (
       <MuiThemeProvider>
@@ -456,10 +500,44 @@ export default class App extends Component {
               <div style={s.listPolicyTitle}>Policy List</div>
               <List>
                 {policies.map(policy => {
-                  const policyInfo = `Id: ${policy.id}`
-                  return <ListItem primaryText={"Sent mail"} leftIcon={<AssignMent />} />
+                  const { policyId, fullName, carrierFlightNumber, departureDate } = policy
+                  const policyBrief = `${fullName} - ${carrierFlightNumber} : ${departureDate}`
+
+                  return (
+                    <ListItem
+                      key={policyId}
+                      primaryText={policyId}
+                      secondaryText={policyBrief}
+                      leftIcon={<AssignMent />}
+                    />
+                  )
                 })}
               </List>
+            </Paper>
+            {/* Account Balance */}
+            <Paper zDepth={1} style={s.accountBalanceRoot}>
+              <div style={s.accountBalanceTitle}>Account Balance</div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHeaderColumn>Name</TableHeaderColumn>
+                    <TableHeaderColumn>Balance</TableHeaderColumn>
+                    <TableHeaderColumn>Address</TableHeaderColumn>
+                  </TableRow>
+                </TableHeader>
+                <TableBody stripedRows={true}>
+                  <TableRow>
+                    <TableRowColumn>FD.Ledger</TableRowColumn>
+                    <TableRowColumn>{ledgerBalance}</TableRowColumn>
+                    <TableRowColumn>{ledgerAddress}</TableRowColumn>
+                  </TableRow>
+                  <TableRow>
+                    <TableRowColumn>Current User</TableRowColumn>
+                    <TableRowColumn>{customerBalance}</TableRowColumn>
+                    <TableRowColumn>{customerAddress}</TableRowColumn>
+                  </TableRow>
+                </TableBody>
+              </Table>
             </Paper>
           </div>
 

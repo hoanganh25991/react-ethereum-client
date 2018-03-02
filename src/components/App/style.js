@@ -2,6 +2,7 @@ const _10px = 10
 const _20px = 20
 const _30px = 30
 const _550px = 550
+const _590px = 590
 const _770px = 770
 const _200px = 200
 const _1d4em = "1.4em"
@@ -45,7 +46,7 @@ export const style = {
     flex: "1"
   },
   listPolicyRoot: {
-    minWidth: _770px,
+    width: _590px,
     padding: _20px,
     margin: _20px
   },
@@ -65,5 +66,17 @@ export const style = {
     position: "absolute",
     top: `calc(50% - ${_30px}px)`,
     left: `calc(50% - ${_30px}px)`
+  },
+  accountBalanceRoot: {
+    padding: _20px,
+    margin: _20px,
+    position: "relative",
+    width: _590px
+  },
+  accountBalanceTitle: {
+    fontWeight: "bold",
+    fontSize: _1d4em,
+    textAlign: "center",
+    opacity: _0d8opacity
   }
 }
