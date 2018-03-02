@@ -12,6 +12,9 @@ import React, { Component, Fragment, PureComponent } from 'react';
 import MuiThemeProvider from "material-ui/styles/MuiThemeProvider"
 import FD_NewPolicyJson from "./../../built-contracts/FlightDelayNewPolicy.json"
 import {getScheduleByRoute, getCarrierFlightNumberInfo} from "./../../flightstats"
+import {List, ListItem} from 'material-ui/List';
+import Subheader from 'material-ui/Subheader';
+import AssignMent from "material-ui/svg-icons/action/assignment"
 
 const _ = console.log
 const web3 = window.web3;
@@ -54,7 +57,7 @@ export default class App extends Component {
     const FD_NewPolicyAbi = window.web3.eth.contract(abi);
     const FD_NewPolicy = FD_NewPolicyAbi.at("0x29f70a7278dc2dfdce8767cf8302f22fea4191dc");
 
-    // this.watchNewPolicyEvent(FD_NewPolicy);
+    this.watchNewPolicyEvent(FD_NewPolicy);
     this.watchPolicyEvent(FD_NewPolicy);
 
     this.state = {
@@ -72,6 +75,9 @@ export default class App extends Component {
       carrierFlightNumber: "",
       availableFlights: [],
       premium: "",
+
+      // Policies
+      policies: [],
     }
   }
 
@@ -128,7 +134,7 @@ export default class App extends Component {
 
     const currencyETH = 0
     const customerId = "react-client"
-    const premium = 0.06
+    const premium = 0.8
 
     _("[createDefaultPolicy][carrierFlightNumber, departureDate, departureTime, arrivalTime, currencyETH, customerId]", carrierFlightNumber, departureDate, departureTime, arrivalTime, currencyETH, customerId);
 
@@ -225,6 +231,8 @@ export default class App extends Component {
     const customerId = "react-client"
     const {departureDate, departureTime, arrivalTime} = getCarrierFlightNumberInfo(carrierFlightNumber)
 
+    _("[createDefaultPolicy][carrierFlightNumber, departureDate, departureTime, arrivalTime, currencyETH, customerId]", carrierFlightNumber, departureDate, departureTime, arrivalTime, currencyETH, customerId);
+
     FD_NewPolicy.newPolicy(carrierFlightNumber, departureDate, departureTime, arrivalTime, currencyETH, customerId, {
       gas: 4476768,
       from: acc1,
@@ -249,10 +257,30 @@ export default class App extends Component {
     const premium = value
     this.setState({premium})
   }
+  
+  readNewPolicyAllEvents = () => {
+    const {FD_NewPolicy} = this.state;
+
+    const events = FD_NewPolicy.allEvents()
+    events.watch((err, result) => {
+      if(err) return _("[allEvents]", err)
+      _("[allEvents]", result)
+    })
+  }
+
+  readNewPolicyEventAt = () => {
+    const {FD_NewPolicy, transactionHash: txHash} = this.state;
+
+    const events = FD_NewPolicy.allEvents({from: txHash, to: txHash})
+    events.get((err, result) => {
+      if(err) return _("[allEvents]", err)
+      _("[allEvents]", result)
+    })
+  }
 
 
   render() {
-    const {departureAirport, arrivalAirport, carrierFlightNumber, availableFlights} = this.state;
+    const {departureAirport, arrivalAirport, carrierFlightNumber, availableFlights, policies} = this.state;
 
     return (
       <MuiThemeProvider>
@@ -264,7 +292,8 @@ export default class App extends Component {
             </header>
           </div>
           <div style={s.rootDiv}>
-            <Paper zDepth={1} style={s.padding}>
+            {/* New Policy */}
+            <Paper zDepth={1} style={s.newPolicyRoot}>
               <div style={s.newPolicyTitle}>Create New Policy</div>
               <div style={s.policyParamsDiv}>
                 <TextField
@@ -322,30 +351,57 @@ export default class App extends Component {
                   onClick={this.createNewPolicy} />
               </div>
             </Paper>
+            {/* List Policy */}
+            <Paper zDepth={1} style={s.listPolicyRoot}>
+              <div style={s.listPolicyTitle}>Policy List</div>
+              <List>
+                {policies.map(policy => {
+
+                  const policyInfo = `Id: ${policy.id}`
+                  return <ListItem primaryText={"Sent mail"} leftIcon={<AssignMent />} />
+                })}
+              </List>
+            </Paper>
           </div>
+
+          {/* OLD CODE */}
           <div>
-            <button onClick={this.toUnixTime}>To Unix Time</button>
-          </div>
-          <div>
-            <button onClick={this.createDefaultPolicy}>Create Default Policy</button>
-          </div>
-          <div>
-            <input
-              type={"text"}
-              placeholder={"Transaction Hash"}
-              value={this.state.transactionHash}
-              onChange={this.storeTransactionHash}
-            />
-            <button onClick={this.checkHash}>Check Hash</button>
-          </div>
-          <div>
-            <input
-              type={"text"}
-              placeholder={"Address"}
-              value={this.state.address}
-              onChange={this.storeAddress}
-            />
-            <button onClick={this.checkBalance}>Check Balance</button>
+            <div style={s.oldDiv}>
+              <button onClick={this.toUnixTime}>To Unix Time</button>
+            </div>
+            <div style={s.oldDiv}>
+              <button onClick={this.createDefaultPolicy}>Create Default Policy</button>
+            </div>
+            <div style={s.oldDiv}>
+              <input
+                type={"text"}
+                placeholder={"Transaction Hash"}
+                value={this.state.transactionHash}
+                onChange={this.storeTransactionHash}
+              />
+              <button onClick={this.checkHash}>Check Hash</button>
+            </div>
+            <div style={s.oldDiv}>
+              <input
+                type={"text"}
+                placeholder={"Address"}
+                value={this.state.address}
+                onChange={this.storeAddress}
+              />
+              <button onClick={this.checkBalance}>Check Balance</button>
+            </div>
+            <div style={s.oldDiv}>
+              <input
+                type={"text"}
+                placeholder={"Transaction Hash"}
+                value={this.state.transactionHash}
+                onChange={this.storeTransactionHash}
+              />
+              <button onClick={this.readNewPolicyEventAt}>Read NewPolicy Event</button>
+            </div>
+            <div style={s.oldDiv}>
+              <button onClick={this.readNewPolicyAllEvents}>Read NewPolicy All Events</button>
+            </div>
           </div>
         </div>
       </MuiThemeProvider>
