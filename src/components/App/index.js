@@ -290,13 +290,13 @@ export default class App extends Component {
         const txHash = result
         _("[createNewPolicy][txHash]", result)
 
-        const eventsWait = this.checkPolicyAppliedOrDeclineByEvent(txHash)
+        const eventWait = this.checkPolicyAppliedOrDeclineByEvent(txHash)
 
-        eventsWait.then(events => {
-          if (!events) return _("No LogPolicyApplied")
-          _("[createNewPolicy][LogPolicyApplied]", events)
+        eventWait.then(event => {
+          if (!event) return _("No LogPolicyApplied")
+          _("[createNewPolicy][LogPolicyApplied]", event)
 
-          const e1 = events[0]
+          const e1 = event
           if (!e1) return _("[createNewPolicy][e1]", e1)
 
           const { args } = e1
@@ -330,7 +330,7 @@ export default class App extends Component {
         const { FD_NewPolicy } = this.state
         const events = FD_NewPolicy.LogPolicyApplied({ fromBlock: blockNumber, toBlock: blockNumber })
 
-        events.get((err, result) => {
+        events.watch((err, result) => {
           if (err) return reject(null)
           resolve(result)
         })
