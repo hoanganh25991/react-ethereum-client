@@ -2,25 +2,48 @@ import './style.css';
 import moment from "moment"
 import logo from './logo.svg';
 import { style as s } from "./style"
+import Paper from "material-ui/Paper"
+import MenuItem from 'material-ui/MenuItem';
 import TextField from "material-ui/TextField"
 import DatePicker from 'material-ui/DatePicker';
+import SelectField from 'material-ui/SelectField';
 import RaisedButton from "material-ui/RaisedButton"
-import Paper from "material-ui/Paper"
 import React, { Component, Fragment, PureComponent } from 'react';
 import MuiThemeProvider from "material-ui/styles/MuiThemeProvider"
 import FD_NewPolicyJson from "./../../built-contracts/FlightDelayNewPolicy.json"
-import SelectField from 'material-ui/SelectField';
-import MenuItem from 'material-ui/MenuItem';
 
 const _ = console.log
 const web3 = window.web3;
 const eth = web3.eth;
 const acc1TotalEth = 10;
 
-const items = [];
-for (let i = 0; i < 100; i++ ) {
-  items.push(<MenuItem value={i} key={i} primaryText={`Item ${i}`} />);
-}
+const demoAirports = [
+  {
+    name: "AKL - Auckland, New Zealand Auckland International Airport",
+    code: "AKL",
+  },
+  {
+    name: "AMS - Amsterdam, Netherlands Schiphol",
+    code: "AMS",
+  },
+  {
+    name: "ATH - Athens, Greece - Venizelos",
+    code: "ATH",
+  },
+  {
+    name: "SIN - Singapore, Singapore Changi International Airport",
+    code: "SIN",
+  },
+  {
+    name: "HEL - Helsinki, Finland Helsinki",
+    code: "HEL",
+  },
+]
+
+const selectAirports = demoAirports.map(airport => {
+  const {name, code} = airport;
+  return <MenuItem value={code} key={code} primaryText={name} />
+})
 
 export default class App extends Component {
   constructor(props){
@@ -35,8 +58,11 @@ export default class App extends Component {
       FD_NewPolicy,
       transactionHash: "",
       address: "",
+      departureDate: "",
       departureAirport: "",
       arrivalAirport: "",
+      carrierFlightNumber: "",
+      availableFlights: [],
     }
   }
 
@@ -137,6 +163,11 @@ export default class App extends Component {
     })
   }
 
+  storeDepartureDate = (e, value) => {
+    const departureDate = value;
+    this.setState({departureDate})
+  }
+
   storeDepartureAirport = (e, index, value) => {
     const departureAirport = value;
     this.setState({departureAirport});
@@ -147,8 +178,17 @@ export default class App extends Component {
     this.setState({arrivalAirport})
   }
 
+  storeCarrierFlightNumber = (e, index, value) => {
+    const carrierFlightNumber = value;
+    this.setState({carrierFlightNumber})
+  }
+
+  getAvailableFlights = () => {
+    const {departureAirport, arrivalAirport, } = this.state;
+  }
+
   render() {
-    const {departureAirport, arrivalAirport} = this.state;
+    const {departureAirport, arrivalAirport, carrierFlightNumber, availableFlights} = this.state;
 
     return (
       <MuiThemeProvider>
@@ -175,7 +215,7 @@ export default class App extends Component {
                   floatingLabelText={"From"}
                   maxHeight={s.selectDiv.height}
                 >
-                  {items}
+                  {selectAirports}
                 </SelectField>
                 <SelectField
                   value={arrivalAirport}
@@ -183,10 +223,23 @@ export default class App extends Component {
                   floatingLabelText={"To"}
                   maxHeight={s.selectDiv.height}
                 >
-                  {items}
+                  {selectAirports}
                 </SelectField>
                 <DatePicker
-                  floatingLabelText="Departure Date"/>
+                  floatingLabelText="Departure Date"
+                  onChange={this.storeDepartureDate}
+                />
+                <SelectField
+                  value={carrierFlightNumber}
+                  onChange={this.storeCarrierFlightNumber}
+                  floatingLabelText={"Carrier Flight Number"}
+                  maxHeight={s.selectDiv.height}
+                >
+                  {availableFlights.map(flight => {
+                    const {name, code} = flight;
+                    return <MenuItem value={code} key={code} primaryText={name} />
+                  })}
+                </SelectField>
                 <TextField
                   floatingLabelText="Premium"
                 />
