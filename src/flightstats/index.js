@@ -1,3 +1,5 @@
+import moment from "moment"
+
 export const getScheduleByRoute = (date, from, to, cb = null) => {
   const shouldSearch = date && from && to
   if(!shouldSearch) return
@@ -27,5 +29,22 @@ export const getScheduleByRoute = (date, from, to, cb = null) => {
 
   if(cb){
     cb(flights)
+  }
+}
+
+
+export const getCarrierFlightNumberInfo = carrierFlightNumber => {
+  const now = moment();
+  const nowInTimestamp = +now.format("X")
+
+  const departureDate = `/dep/${now.format("YYYY/MM/DD")}`
+  const departureTime = nowInTimestamp + 100;
+  const arrivalTime = departureTime + 90;
+
+  return {
+    carrierFlightNumber,
+    departureDate,
+    departureTime,
+    arrivalTime,
   }
 }

@@ -11,12 +11,13 @@ import RaisedButton from "material-ui/RaisedButton"
 import React, { Component, Fragment, PureComponent } from 'react';
 import MuiThemeProvider from "material-ui/styles/MuiThemeProvider"
 import FD_NewPolicyJson from "./../../built-contracts/FlightDelayNewPolicy.json"
-import {getScheduleByRoute} from "./../../flightstats"
+import {getScheduleByRoute, getCarrierFlightNumberInfo} from "./../../flightstats"
 
 const _ = console.log
 const web3 = window.web3;
 const eth = web3.eth;
 const acc1TotalEth = 10;
+const acc1 = web3.eth.accounts[0];
 
 const demoAirports = [
   {
@@ -53,7 +54,8 @@ export default class App extends Component {
     const FD_NewPolicyAbi = window.web3.eth.contract(abi);
     const FD_NewPolicy = FD_NewPolicyAbi.at("0x29f70a7278dc2dfdce8767cf8302f22fea4191dc");
 
-    this.watchNewPolicyEvent(FD_NewPolicy);
+    // this.watchNewPolicyEvent(FD_NewPolicy);
+    this.watchPolicyEvent(FD_NewPolicy);
 
     this.state = {
       // New Policy
@@ -73,17 +75,25 @@ export default class App extends Component {
     }
   }
 
-  watchNewPolicyEvent = FD_NewPolicy => {
+  watchNewPolicyEvent = contract => {
     // const newPolicyEvent = FD_NewPolicy.LogPolicyDeclined({fromBlock: 0, toBlock: 'latest'});
     // newPolicyEvent.watch((err, result) => {
     //   if(err) return _("[LogPolicyDeclined][ERR]", err)
     //   _("[LogPolicyDeclined]", result)
     // });
 
-    const events = FD_NewPolicy.allEvents({fromBlock: 0, toBlock: 'latest'});
+    const events = contract.allEvents({fromBlock: 0, toBlock: 'latest'});
     events.watch((err, result) => {
       if(err) return _("[LogEvent][ERR]", err)
       _("[LogEvent]", result)
+    })
+  }
+
+  watchPolicyEvent = contract => {
+    const events = contract.LogPolicyApplied({fromBlock: 0, toBlock: 'latest'});
+    events.watch((err, result) => {
+      if(err) return _("[LogPolicyApplied][ERR]", err)
+      _("[LogPolicyApplied]", result)
     })
   }
 
@@ -110,27 +120,26 @@ export default class App extends Component {
 
     const now = moment();
     const nowInTimestamp = +now.format("X")
+
+    const carrierFlightNumber = "HA/22"
+    const departureDate = `/dep/${now.format("YYYY/MM/DD")}`
     const departureTime = nowInTimestamp + 100;
     const arrivalTime = departureTime + 90;
 
-    _("[createDefaultPolicy][departureTime, arrivalTime]", departureTime, arrivalTime);
+    const currencyETH = 0
+    const customerId = "react-client"
+    const premium = 0.06
 
-    FD_NewPolicy.newPolicy(
-      "HA/22",
-      "/dep/2018/03/01",
-      departureTime,
-      arrivalTime,
-      0,
-      "12345",
-      {
-        gas: 4476768,
-        from: web3.eth.accounts[0],
-        value: web3.toWei(0.06, 'ether')
-      }
-      , (err, result) => {
-        if(err) return _(`${err}`)
-        return _(result)
-      })
+    _("[createDefaultPolicy][carrierFlightNumber, departureDate, departureTime, arrivalTime, currencyETH, customerId]", carrierFlightNumber, departureDate, departureTime, arrivalTime, currencyETH, customerId);
+
+    FD_NewPolicy.newPolicy(carrierFlightNumber, departureDate, departureTime, arrivalTime, currencyETH, customerId, {
+      gas: 4476768,
+      from: acc1,
+      value: web3.toWei(premium, 'ether')
+    }, (err, result) => {
+      if(err) return _(`${err}`)
+      return _(result)
+    })
   }
 
   storeTransactionHash = e => {
@@ -207,7 +216,23 @@ export default class App extends Component {
   }
 
   createNewPolicy = () => {
-    const {departureAirport, arrivalAirport, departureDate, carrierFlightNumber} = this.state
+    const { carrierFlightNumber, premium } = this.state
+
+    const {FD_NewPolicy} = this.state;
+    _("[FD_NewPolicy]", FD_NewPolicy);
+
+    const currencyETH = 0;
+    const customerId = "react-client"
+    const {departureDate, departureTime, arrivalTime} = getCarrierFlightNumberInfo(carrierFlightNumber)
+
+    FD_NewPolicy.newPolicy(carrierFlightNumber, departureDate, departureTime, arrivalTime, currencyETH, customerId, {
+      gas: 4476768,
+      from: acc1,
+      value: web3.toWei(premium, 'ether')
+    }, (err, result) => {
+      if(err) return _(`${err}`)
+      return _(result)
+    })
   }
 
   storeFullName = (e, value) => {
@@ -298,7 +323,12 @@ export default class App extends Component {
               </div>
             </Paper>
           </div>
-          <button onClick={this.toUnixTime}>To Unix Time</button>
+          <div>
+            <button onClick={this.toUnixTime}>To Unix Time</button>
+          </div>
+          <div>
+            <button onClick={this.createDefaultPolicy}>Create Default Policy</button>
+          </div>
           <div>
             <input
               type={"text"}
@@ -316,9 +346,6 @@ export default class App extends Component {
               onChange={this.storeAddress}
             />
             <button onClick={this.checkBalance}>Check Balance</button>
-          </div>
-          <div>
-            <button onClick={this.createDefaultPolicy}>Create Default Policy</button>
           </div>
         </div>
       </MuiThemeProvider>
