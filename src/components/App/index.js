@@ -11,6 +11,7 @@ import RaisedButton from "material-ui/RaisedButton"
 import React, { Component, Fragment, PureComponent } from 'react';
 import MuiThemeProvider from "material-ui/styles/MuiThemeProvider"
 import FD_NewPolicyJson from "./../../built-contracts/FlightDelayNewPolicy.json"
+import {getScheduleByRoute} from "./../../flightstats"
 
 const _ = console.log
 const web3 = window.web3;
@@ -55,14 +56,20 @@ export default class App extends Component {
     this.watchNewPolicyEvent(FD_NewPolicy);
 
     this.state = {
+      // New Policy
       FD_NewPolicy,
       transactionHash: "",
       address: "",
-      departureDate: "",
+
+      // Policy Params
+      fullName: "",
+      email: "",
       departureAirport: "",
       arrivalAirport: "",
+      departureDate: "",
       carrierFlightNumber: "",
       availableFlights: [],
+      premium: "",
     }
   }
 
@@ -97,7 +104,7 @@ export default class App extends Component {
     })
   }
 
-  createNewPolicy = () => {
+  createDefaultPolicy = () => {
     const {FD_NewPolicy} = this.state;
     _("[FD_NewPolicy]", FD_NewPolicy);
 
@@ -106,7 +113,7 @@ export default class App extends Component {
     const departureTime = nowInTimestamp + 100;
     const arrivalTime = departureTime + 90;
 
-    _("[createNewPolicy][departureTime, arrivalTime]", departureTime, arrivalTime);
+    _("[createDefaultPolicy][departureTime, arrivalTime]", departureTime, arrivalTime);
 
     FD_NewPolicy.newPolicy(
       "HA/22",
@@ -165,17 +172,24 @@ export default class App extends Component {
 
   storeDepartureDate = (e, value) => {
     const departureDate = value;
-    this.setState({departureDate})
+    this.setState({departureDate}, () => {
+      this.getAvailableFlights()
+    })
+
   }
 
   storeDepartureAirport = (e, index, value) => {
     const departureAirport = value;
-    this.setState({departureAirport});
+    this.setState({departureAirport}, () => {
+      this.getAvailableFlights()
+    });
   }
 
   storeArrivalAirport = (e, index, value) => {
     const arrivalAirport = value;
-    this.setState({arrivalAirport})
+    this.setState({arrivalAirport}, () => {
+      this.getAvailableFlights()
+    })
   }
 
   storeCarrierFlightNumber = (e, index, value) => {
@@ -184,8 +198,33 @@ export default class App extends Component {
   }
 
   getAvailableFlights = () => {
-    const {departureAirport, arrivalAirport, } = this.state;
+    const {departureAirport, arrivalAirport, departureDate} = this.state;
+    getScheduleByRoute(departureDate, departureAirport, arrivalAirport, this.updateAvailableFlights)
   }
+
+  updateAvailableFlights = flights => {
+    this.setState({availableFlights: flights})
+  }
+
+  createNewPolicy = () => {
+    const {departureAirport, arrivalAirport, departureDate, carrierFlightNumber} = this.state
+  }
+
+  storeFullName = (e, value) => {
+    const fullName = value
+    this.setState({fullName})
+  }
+
+  storeEmail = (e, value) => {
+    const email = value
+   this.setState({email})
+  }
+
+  storePremium = (e, value) => {
+    const premium = value
+    this.setState({premium})
+  }
+
 
   render() {
     const {departureAirport, arrivalAirport, carrierFlightNumber, availableFlights} = this.state;
@@ -204,10 +243,14 @@ export default class App extends Component {
               <div style={s.newPolicyTitle}>Create New Policy</div>
               <div style={s.policyParamsDiv}>
                 <TextField
-                  floatingLabelText="Full Name"
+                  floatingLabelText={"Full Name"}
+                  value={this.fullName}
+                  onChange={this.storeFullName}
                 />
                 <TextField
-                  floatingLabelText="Email"
+                  floatingLabelText={"Email"}
+                  value={this.email}
+                  onChange={this.storeEmail}
                 />
                 <SelectField
                   value={departureAirport}
@@ -241,7 +284,9 @@ export default class App extends Component {
                   })}
                 </SelectField>
                 <TextField
-                  floatingLabelText="Premium"
+                  floatingLabelText={"Premium"}
+                  value={this.premium}
+                  onChange={this.storePremium}
                 />
               </div>
               <div style={s.applyBtnDiv}>
@@ -271,6 +316,9 @@ export default class App extends Component {
               onChange={this.storeAddress}
             />
             <button onClick={this.checkBalance}>Check Balance</button>
+          </div>
+          <div>
+            <button onClick={this.createDefaultPolicy}>Create Default Policy</button>
           </div>
         </div>
       </MuiThemeProvider>
