@@ -6,24 +6,24 @@ export const getScheduleByRoute = (date, from, to, cb = null) => {
 
   const flights = [
     {
-      name: "HNL1568",
-      code: "1568",
+      name: "HNL20",
+      code: "HA/20",
     },
     {
       name: "HNL7856",
-      code: "7856",
+      code: "HA/7856",
     },
     {
-      name: "HNL7845",
-      code: "7845",
+      name: "HNL6545",
+      code: "HA/6545",
     },
     {
       name: "HNL8562",
-      code: "8562",
+      code: "HA/8562",
     },
     {
       name: "HNL1222",
-      code: "1222",
+      code: "HA/1222",
     },
   ]
 
