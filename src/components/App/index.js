@@ -57,14 +57,15 @@ export default class App extends Component {
     const FD_NewPolicyAbi = window.web3.eth.contract(abi);
     const FD_NewPolicy = FD_NewPolicyAbi.at("0x29f70a7278dc2dfdce8767cf8302f22fea4191dc");
 
-    this.watchNewPolicyEvent(FD_NewPolicy);
-    this.watchPolicyEvent(FD_NewPolicy);
+    // this.watchNewPolicyEvent(FD_NewPolicy);
+    // this.watchPolicyEvent(FD_NewPolicy);
 
     this.state = {
       // New Policy
       FD_NewPolicy,
       transactionHash: "",
       address: "",
+      block: "",
 
       // Policy Params
       fullName: "",
@@ -151,6 +152,11 @@ export default class App extends Component {
   storeTransactionHash = e => {
     const transactionHash = e.target.value;
     this.setState({transactionHash})
+  }
+
+  storeBlock = e => {
+    const block = e.target.value;
+    this.setState({block})
   }
 
   checkHash = () => {
@@ -261,20 +267,20 @@ export default class App extends Component {
   readNewPolicyAllEvents = () => {
     const {FD_NewPolicy} = this.state;
 
-    const events = FD_NewPolicy.allEvents()
-    events.watch((err, result) => {
+    const events = FD_NewPolicy.allEvents({fromBlock: 0, toBlock: "latest"})
+    events.get((err, result) => {
       if(err) return _("[allEvents]", err)
       _("[allEvents]", result)
     })
   }
 
   readNewPolicyEventAt = () => {
-    const {FD_NewPolicy, transactionHash: txHash} = this.state;
+    const {FD_NewPolicy, block} = this.state;
 
-    const events = FD_NewPolicy.allEvents({from: txHash, to: txHash})
+    const events = FD_NewPolicy.LogPolicyApplied({fromBlock: block, toBlock: block})
     events.get((err, result) => {
-      if(err) return _("[allEvents]", err)
-      _("[allEvents]", result)
+      if(err) return _("[LogPolicyApplied]", err)
+      _("[LogPolicyApplied]", result)
     })
   }
 
@@ -393,9 +399,9 @@ export default class App extends Component {
             <div style={s.oldDiv}>
               <input
                 type={"text"}
-                placeholder={"Transaction Hash"}
-                value={this.state.transactionHash}
-                onChange={this.storeTransactionHash}
+                placeholder={"Block Number"}
+                value={this.state.block}
+                onChange={this.storeBlock}
               />
               <button onClick={this.readNewPolicyEventAt}>Read NewPolicy Event</button>
             </div>
