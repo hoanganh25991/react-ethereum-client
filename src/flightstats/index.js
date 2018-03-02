@@ -37,7 +37,7 @@ export const getCarrierFlightNumberInfo = carrierFlightNumber => {
   const nowInTimestamp = +now.format("X")
 
   const departureDate = `/dep/${now.format("YYYY/MM/DD")}`
-  const departureTime = nowInTimestamp + 100
+  const departureTime = nowInTimestamp + 10
   const arrivalTime = departureTime + 90
 
   return {

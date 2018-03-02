@@ -62,6 +62,7 @@ export default class App extends Component {
       address: "",
       block: "",
       pending: false,
+      clock: null,
 
       // Account Balance
       ledgerAddress,
@@ -86,6 +87,7 @@ export default class App extends Component {
     // First run
     this.getBalance()
     this.watchBalance()
+    this.setUpClock()
   }
 
   getBalance = () => {
@@ -118,6 +120,13 @@ export default class App extends Component {
       _("[watchBalance][LogReceiveFunds]", result)
       this.getBalance()
     })
+  }
+
+  setUpClock = () => {
+    setInterval(() => {
+      const clock = new Date().getTime()
+      this.setState({ clock })
+    }, 500)
   }
 
   watchNewPolicyEvent = contract => {
@@ -429,6 +438,15 @@ export default class App extends Component {
     })
   }
 
+  getPercent = (departureTime, arrivalTime) => {
+    const nowTimestamp = +moment().format("X")
+    const total = arrivalTime - departureTime
+    const progress = nowTimestamp - departureTime
+    const percent = progress / total * 100
+    _("[percent]", percent)
+    return percent
+  }
+
   render() {
     const {
       departureAirport,
@@ -440,7 +458,8 @@ export default class App extends Component {
       ledgerAddress,
       ledgerBalance,
       customerAddress,
-      customerBalance
+      customerBalance,
+      clock
     } = this.state
 
     return (
@@ -452,6 +471,8 @@ export default class App extends Component {
               <h1 className="App-title">React & Ethereum Clients</h1>
             </header>
           </div>
+
+          {/*<div style={{backgroundColor: "red"}}>{clock}</div>*/}
 
           <Tabs>
             <Tab label="Dashboard">
@@ -507,8 +528,16 @@ export default class App extends Component {
                   <div style={s.listPolicyTitle}>Policy List</div>
                   <List>
                     {policies.map(policy => {
-                      const { policyId, fullName, carrierFlightNumber, departureDate } = policy
+                      const {
+                        policyId,
+                        fullName,
+                        carrierFlightNumber,
+                        departureDate,
+                        departureTime,
+                        arrivalTime
+                      } = policy
                       const policyBrief = `${fullName} - ${carrierFlightNumber} : ${departureDate}`
+                      const percent = this.getPercent(departureTime, arrivalTime)
 
                       return (
                         <ListItem
@@ -518,7 +547,7 @@ export default class App extends Component {
                           leftIcon={<AssignMent />}
                         >
                           <div style={s.flightProgressDiv}>
-                            <LinearProgress mode="determinate" value={80} />
+                            <LinearProgress mode="determinate" value={percent} />
                           </div>
                         </ListItem>
                       )
