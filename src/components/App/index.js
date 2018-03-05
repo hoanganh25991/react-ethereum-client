@@ -63,6 +63,7 @@ export default class App extends Component {
       block: "",
       pending: false,
       clock: null,
+      flight: "",
 
       // Account Balance
       ledgerAddress,
@@ -280,6 +281,11 @@ export default class App extends Component {
     this.setState({ carrierFlightNumber })
   }
 
+  storeFlight = (e, value) => {
+    const flight = value
+    this.setState({ flight })
+  }
+
   getAvailableFlights = () => {
     const { departureAirport, arrivalAirport, departureDate } = this.state
     getScheduleByRoute(departureDate, departureAirport, arrivalAirport, this.updateAvailableFlights)
@@ -429,6 +435,10 @@ export default class App extends Component {
     })
   }
 
+  checkFlight = () => {
+    const { flight } = this.state
+  }
+
   readNewPolicyEventAt = () => {
     const { FD_NewPolicy, block } = this.state
 
@@ -575,6 +585,10 @@ export default class App extends Component {
               </div>
             </Tab>
             <Tab label="Debug">
+              <div>
+                <TextField floatingLabelText={"Flight"} value={this.flight} onChange={this.storeFlight} />
+                <RaisedButton label={"Check Flight"} primary={true} onClick={this.checkFlight} />
+              </div>
               <div>
                 <div style={s.oldDiv}>
                   <button onClick={this.toUnixTime}>To Unix Time</button>
