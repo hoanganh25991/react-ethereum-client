@@ -44,14 +44,14 @@ export default class App extends Component {
     const { abi: newPolicyAbi } = FD_NewPolicyJson
     const { abi: ledgerAbi } = FD_LedgerJson
 
+    // NewPolicy Contract
     const FD_NewPolicyAbi = web3.eth.contract(newPolicyAbi)
     const FD_NewPolicy = FD_NewPolicyAbi.at(newPolicyAddress)
 
+    // Ledger Contract
     const FD_LedgerAbi = web3.eth.contract(ledgerAbi)
     const FD_Ledger = FD_LedgerAbi.at(ledgerAddress)
 
-    // this.watchNewPolicyEvent(FD_NewPolicy);
-    // this.watchPolicyEvent(FD_NewPolicy);
     const customerAddress = acc1
 
     this.state = {
@@ -85,9 +85,9 @@ export default class App extends Component {
     }
 
     // First run
-    this.getBalance()
+    /* TODO Listen to web3.eth, when MetaMask inject accounst > run */
+    setTimeout(() => this.getBalance(), 500)
     this.watchBalance()
-    // setTimeout(() => this.setUpClock(), 1000)
   }
 
   getBalance = () => {
