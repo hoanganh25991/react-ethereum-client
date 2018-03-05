@@ -19,7 +19,7 @@ import CircularProgress from "material-ui/CircularProgress"
 import { Table, TableBody, TableHeader, TableHeaderColumn, TableRow, TableRowColumn } from "material-ui/Table"
 import FD_LedgerJson from "./../../built-contracts/FlightDelayLedger.json"
 import { Tabs, Tab } from "material-ui/Tabs"
-import LinearProgress from "material-ui/LinearProgress"
+import FlightTimeLine from "../FlightTimeLine"
 
 const _ = console.log
 const web3 = window.web3
@@ -87,23 +87,25 @@ export default class App extends Component {
     // First run
     this.getBalance()
     this.watchBalance()
-    setTimeout(() => this.setUpClock(), 1000)
+    // setTimeout(() => this.setUpClock(), 1000)
   }
 
   getBalance = () => {
     const { ledgerAddress, customerAddress } = this.state
 
-    eth.getBalance(ledgerAddress, (err, result) => {
-      if (err) return
-      const ledgerBalance = web3.fromWei(result, "ether").toString()
-      this.setState({ ledgerBalance })
-    })
+    ledgerAddress &&
+      eth.getBalance(ledgerAddress, (err, result) => {
+        if (err) return
+        const ledgerBalance = web3.fromWei(result, "ether").toString()
+        this.setState({ ledgerBalance })
+      })
 
-    eth.getBalance(customerAddress, (err, result) => {
-      if (err) return
-      const customerBalance = web3.fromWei(result, "ether").toString()
-      this.setState({ customerBalance })
-    })
+    customerAddress &&
+      eth.getBalance(customerAddress, (err, result) => {
+        if (err) return
+        const customerBalance = web3.fromWei(result, "ether").toString()
+        this.setState({ customerBalance })
+      })
   }
 
   watchBalance = () => {
@@ -120,13 +122,6 @@ export default class App extends Component {
       _("[watchBalance][LogReceiveFunds]", result)
       this.getBalance()
     })
-  }
-
-  setUpClock = () => {
-    setInterval(() => {
-      const clock = new Date().getTime()
-      this.setState({ clock })
-    }, 300)
   }
 
   watchNewPolicyEvent = contract => {
@@ -372,6 +367,12 @@ export default class App extends Component {
         doneWait.then(() => {
           const pending = false
           this.setState({ pending })
+
+          /* Debug check flight arrive */
+          // setInterval(() => {
+          //   const diff = +moment().format("X") - departureTime
+          //   _("[TimeElapse]", diff)
+          // }, 1000)
         })
       }
     )
@@ -436,14 +437,6 @@ export default class App extends Component {
       if (err) return _("[LogPolicyApplied]", err)
       _("[LogPolicyApplied]", result)
     })
-  }
-
-  getPercent = (departureTime, arrivalTime) => {
-    const nowTimestamp = +moment().format("X")
-    const total = arrivalTime - departureTime
-    const progress = nowTimestamp - departureTime
-    const percent = progress / total * 100
-    return percent
   }
 
   render() {
@@ -535,8 +528,9 @@ export default class App extends Component {
                         departureTime,
                         arrivalTime
                       } = policy
+
                       const policyBrief = `${fullName} - ${carrierFlightNumber} : ${departureDate}`
-                      const percent = this.getPercent(departureTime, arrivalTime)
+                      const flightTlObj = { departureTime, arrivalTime }
 
                       return (
                         <ListItem
@@ -546,7 +540,7 @@ export default class App extends Component {
                           leftIcon={<AssignMent />}
                         >
                           <div style={s.flightProgressDiv}>
-                            <LinearProgress mode="determinate" value={percent} />
+                            <FlightTimeLine {...flightTlObj} />
                           </div>
                         </ListItem>
                       )
