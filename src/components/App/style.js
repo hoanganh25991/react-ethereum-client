@@ -61,6 +61,11 @@ export const style = {
   oldDiv: {
     padding: _10px
   },
+  debugRootOfRoot: {
+    display: "flex",
+    alignItems: "self-start",
+    flexWrap: "wrap"
+  },
   pendingRoot: {
     position: "relative"
   },
@@ -96,7 +101,7 @@ export const style = {
     textAlign: "center",
     opacity: _0d8opacity
   },
-  configRoot: {
+  contractRoot: {
     padding: _20px,
     margin: _20px,
     position: "relative",

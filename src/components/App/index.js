@@ -648,142 +648,151 @@ export default class App extends Component {
               </div>
             </Tab>
             <Tab label="Debug">
-              {/* Funding */}
-              <Paper zDepth={1} style={s.fundingRoot}>
-                <div>
-                  <div style={s.fundTitle}>Funding</div>
+              <div style={s.debugRootOfRoot}>
+                {/* Funding */}
+                <Paper zDepth={1} style={s.fundingRoot}>
+                  <div>
+                    <div style={s.fundTitle}>Funding</div>
+                    <div>
+                      <TextField
+                        floatingLabelText={"Mock Server URL"}
+                        value={mockServerUrl}
+                        onChange={this.storeTextField("mockServerUrl")}
+                      />
+                    </div>
+                    <div>
+                      <TextField
+                        floatingLabelText={"Account Address"}
+                        value={fundedAddress}
+                        onChange={this.storeTextField("fundedAddress")}
+                      />
+                    </div>
+
+                    <div>
+                      <TextField
+                        floatingLabelText={"Fund Amount in ETH"}
+                        value={fundedAmount}
+                        onChange={this.storeTextField("fundedAmount")}
+                      />
+                    </div>
+
+                    <div style={s.applyBtnDiv}>
+                      <div style={s.applySpaceDiv} />
+                      <RaisedButton label={"Apply"} primary={true} onClick={this.sendFund} />
+                    </div>
+                  </div>
+                </Paper>
+
+                {/* Fake Flight Status */}
+                <Paper zDepth={1} style={s.fakeStatusRoot}>
+                  <div style={s.fundTitle}>Fake status</div>
                   <div>
                     <TextField
-                      floatingLabelText={"Account Address"}
-                      value={fundedAddress}
-                      onChange={this.storeTextField("fundedAddress")}
+                      floatingLabelText={"Mock Server URL"}
+                      value={mockServerUrl}
+                      onChange={this.storeTextField("mockServerUrl")}
                     />
                   </div>
-
                   <div>
                     <TextField
-                      floatingLabelText={"Fund Amount in ETH"}
-                      value={fundedAmount}
-                      onChange={this.storeTextField("fundedAmount")}
+                      floatingLabelText={"Carrier"}
+                      value={fakeCarrier}
+                      onChange={this.storeTextField("fakeCarrier")}
+                    />
+                  </div>
+                  <div>
+                    <TextField
+                      floatingLabelText={"Flight"}
+                      value={fakeFlight}
+                      onChange={this.storeTextField("fakeFlight")}
+                    />
+                  </div>
+                  <div>
+                    <TextField
+                      floatingLabelText={"Delay in Minutes"}
+                      value={fakeDelayInMinutes}
+                      onChange={this.storeTextField("fakeDelayInMinutes")}
+                    />
+                  </div>
+                  <div>
+                    <RaisedButton label={"Apply"} primary={true} onClick={this.fakeStatus} />
+                  </div>
+                </Paper>
+
+                {/* Config*/}
+                <Paper zDepth={1} style={s.contractRoot}>
+                  <div style={s.fundTitle}>Contract</div>
+                  <div>
+                    <TextField
+                      floatingLabelText={"Contract NewPolicy Address"}
+                      value={newPolicyAddress}
+                      onChange={this.storeTextField("newPolicyAddress")}
+                    />
+                  </div>
+                  <div>
+                    <TextField
+                      floatingLabelText={"Contract Ledger Address"}
+                      value={ledgerAddress}
+                      onChange={this.storeTextField("ledgerAddress")}
                     />
                   </div>
 
                   <div style={s.applyBtnDiv}>
                     <div style={s.applySpaceDiv} />
-                    <RaisedButton label={"Apply"} primary={true} onClick={this.sendFund} />
+                    <RaisedButton label={"Update contract"} primary={true} onClick={this.updateConfig} />
                   </div>
-                </div>
-              </Paper>
+                </Paper>
 
-              {/* Config*/}
-              <Paper zDepth={1} style={s.configRoot}>
-                <div style={s.fundTitle}>Config</div>
-                <div>
-                  <TextField
-                    floatingLabelText={"Mock Server URL"}
-                    value={mockServerUrl}
-                    onChange={this.storeTextField("mockServerUrl")}
-                  />
-                </div>
-                <div>
-                  <TextField
-                    floatingLabelText={"Contract NewPolicy Address"}
-                    value={newPolicyAddress}
-                    onChange={this.storeTextField("newPolicyAddress")}
-                  />
-                </div>
-                <div>
-                  <TextField
-                    floatingLabelText={"Contract Ledger Address"}
-                    value={ledgerAddress}
-                    onChange={this.storeTextField("ledgerAddress")}
-                  />
-                </div>
+                {/* Debug */}
+                <Paper zDepth={1} style={s.debugRoot}>
+                  <div style={s.fundTitle}>Debug</div>
+                  <div>
+                    <RaisedButton label={"Read Account Balance"} primary={true} onClick={this.readAccountBalance} />
+                  </div>
+                </Paper>
 
-                <div style={s.applyBtnDiv}>
-                  <div style={s.applySpaceDiv} />
-                  <RaisedButton label={"Update contract"} primary={true} onClick={this.updateConfig} />
-                </div>
-              </Paper>
-
-              {/* Debug */}
-              <Paper zDepth={1} style={s.debugRoot}>
-                <div style={s.fundTitle}>Debug</div>
-                <div>
-                  <RaisedButton label={"Read Account Balance"} primary={true} onClick={this.readAccountBalance} />
-                </div>
-              </Paper>
-
-              {/* Fake Flight Status */}
-              <Paper zDepth={1} style={s.fakeStatusRoot}>
-                <div style={s.fundTitle}>Fake status</div>
-                <div>
-                  <TextField
-                    floatingLabelText={"Carrier"}
-                    value={fakeCarrier}
-                    onChange={this.storeTextField("fakeCarrier")}
-                  />
-                </div>
-                <div>
-                  <TextField
-                    floatingLabelText={"Flight"}
-                    value={fakeFlight}
-                    onChange={this.storeTextField("fakeFlight")}
-                  />
-                </div>
-                <div>
-                  <TextField
-                    floatingLabelText={"Delay in Minutes"}
-                    value={fakeDelayInMinutes}
-                    onChange={this.storeTextField("fakeDelayInMinutes")}
-                  />
-                </div>
-                <div>
-                  <RaisedButton label={"Apply"} primary={true} onClick={this.fakeStatus} />
-                </div>
-              </Paper>
-
-              <div>
-                <TextField floatingLabelText={"Flight"} value={this.flight} onChange={this.storeFlight} />
-                <RaisedButton label={"Check Flight"} primary={true} onClick={this.checkFlight} />
-              </div>
-              <div>
-                <div style={s.oldDiv}>
-                  <button onClick={this.toUnixTime}>To Unix Time</button>
-                </div>
-                <div style={s.oldDiv}>
-                  <button onClick={this.createDefaultPolicy}>Create Default Policy</button>
-                </div>
-                <div style={s.oldDiv}>
-                  <input
-                    type={"text"}
-                    placeholder={"Transaction Hash"}
-                    value={this.state.transactionHash}
-                    onChange={this.storeTransactionHash}
-                  />
-                  <button onClick={this.checkHash}>Check Hash</button>
-                </div>
-                <div style={s.oldDiv}>
-                  <input
-                    type={"text"}
-                    placeholder={"Address"}
-                    value={this.state.address}
-                    onChange={this.storeAddress}
-                  />
-                  <button onClick={this.checkBalance}>Check Balance</button>
-                </div>
-                <div style={s.oldDiv}>
-                  <input
-                    type={"text"}
-                    placeholder={"Block Number"}
-                    value={this.state.block}
-                    onChange={this.storeBlock}
-                  />
-                  <button onClick={this.readNewPolicyEventAt}>Read NewPolicy Event</button>
-                </div>
-                <div style={s.oldDiv}>
-                  <button onClick={this.readNewPolicyAllEvents}>Read NewPolicy All Events</button>
-                </div>
+                {/*<div>*/}
+                {/*<TextField floatingLabelText={"Flight"} value={this.flight} onChange={this.storeFlight} />*/}
+                {/*<RaisedButton label={"Check Flight"} primary={true} onClick={this.checkFlight} />*/}
+                {/*</div>*/}
+                {/*<div>*/}
+                {/*<div style={s.oldDiv}>*/}
+                {/*<button onClick={this.toUnixTime}>To Unix Time</button>*/}
+                {/*</div>*/}
+                {/*<div style={s.oldDiv}>*/}
+                {/*<button onClick={this.createDefaultPolicy}>Create Default Policy</button>*/}
+                {/*</div>*/}
+                {/*<div style={s.oldDiv}>*/}
+                {/*<input*/}
+                {/*type={"text"}*/}
+                {/*placeholder={"Transaction Hash"}*/}
+                {/*value={this.state.transactionHash}*/}
+                {/*onChange={this.storeTransactionHash}*/}
+                {/*/>*/}
+                {/*<button onClick={this.checkHash}>Check Hash</button>*/}
+                {/*</div>*/}
+                {/*<div style={s.oldDiv}>*/}
+                {/*<input*/}
+                {/*type={"text"}*/}
+                {/*placeholder={"Address"}*/}
+                {/*value={this.state.address}*/}
+                {/*onChange={this.storeAddress}*/}
+                {/*/>*/}
+                {/*<button onClick={this.checkBalance}>Check Balance</button>*/}
+                {/*</div>*/}
+                {/*<div style={s.oldDiv}>*/}
+                {/*<input*/}
+                {/*type={"text"}*/}
+                {/*placeholder={"Block Number"}*/}
+                {/*value={this.state.block}*/}
+                {/*onChange={this.storeBlock}*/}
+                {/*/>*/}
+                {/*<button onClick={this.readNewPolicyEventAt}>Read NewPolicy Event</button>*/}
+                {/*</div>*/}
+                {/*<div style={s.oldDiv}>*/}
+                {/*<button onClick={this.readNewPolicyAllEvents}>Read NewPolicy All Events</button>*/}
+                {/*</div>*/}
+                {/*</div>*/}
               </div>
             </Tab>
           </Tabs>
