@@ -20,44 +20,22 @@ import { Table, TableBody, TableHeader, TableHeaderColumn, TableRow, TableRowCol
 import FD_LedgerJson from "./../../built-contracts/FlightDelayLedger.json"
 import { Tabs, Tab } from "material-ui/Tabs"
 import FlightTimeLine from "../FlightTimeLine"
+import { callSendFund } from "../../api/sendFund"
 
 const _ = console.log
 const web3 = window.web3
 const eth = web3.eth
 const acc1TotalEth = 10
-const acc1 = web3.eth.accounts[0]
 
 let custom_alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 const fdHash = new HashIds("", 7, custom_alphabet)
 
-const newPolicyAddress = "0x29f70a7278dc2dfdce8767cf8302f22fea4191dc"
-const ledgerAddress = "0xd9a40b118f944bd5885da4e163fbfdda14707ffb"
-
-const selectAirports = demoAirports.map(airport => {
-  const { name, code } = airport
-  return <MenuItem value={code} key={code} primaryText={name} />
-})
-
 export default class App extends Component {
   constructor(props) {
     super(props)
-    const { abi: newPolicyAbi } = FD_NewPolicyJson
-    const { abi: ledgerAbi } = FD_LedgerJson
-
-    // NewPolicy Contract
-    const FD_NewPolicyAbi = web3.eth.contract(newPolicyAbi)
-    const FD_NewPolicy = FD_NewPolicyAbi.at(newPolicyAddress)
-
-    // Ledger Contract
-    const FD_LedgerAbi = web3.eth.contract(ledgerAbi)
-    const FD_Ledger = FD_LedgerAbi.at(ledgerAddress)
-
-    const customerAddress = acc1
 
     this.state = {
       // New Policy
-      FD_NewPolicy,
-      FD_Ledger,
       transactionHash: "",
       address: "",
       block: "",
@@ -69,10 +47,14 @@ export default class App extends Component {
       fundedAddress: "",
       fundedAmount: "",
 
+      // Config
+      mockServerUrl: window.location.href,
+      newPolicyAddress: "0x29f70a7278dc2dfdce8767cf8302f22fea4191dc",
+      ledgerAddress: "0xd9a40b118f944bd5885da4e163fbfdda14707ffb",
+
       // Account Balance
-      ledgerAddress,
       ledgerBalance: null,
-      customerAddress,
+      customerAddress: null,
       customerBalance: null,
 
       // Policy Params
@@ -88,29 +70,60 @@ export default class App extends Component {
       // Policies
       policies: []
     }
+  }
 
+  componentDidMount() {
+    // Update Contract Instance
+    this.updateContractInstance()
+    this.wait(this.getBalance)
+  }
+
+  wait = cb => {
     // First run
     /* TODO Listen to web3.eth, when MetaMask inject accounst > run */
-    setTimeout(() => this.getBalance(), 500)
-    this.watchBalance()
+    setTimeout(cb, 1000)
+  }
+
+  updateContractInstance = () => {
+    const { newPolicyAddress, ledgerAddress } = this.state
+
+    const { abi: newPolicyAbi } = FD_NewPolicyJson
+    const { abi: ledgerAbi } = FD_LedgerJson
+
+    // NewPolicy Contract
+    const FD_NewPolicyAbi = web3.eth.contract(newPolicyAbi)
+    const FD_NewPolicy = FD_NewPolicyAbi.at(newPolicyAddress)
+
+    // Ledger Contract
+    const FD_LedgerAbi = web3.eth.contract(ledgerAbi)
+    const FD_Ledger = FD_LedgerAbi.at(ledgerAddress)
+
+    this.setState({ FD_NewPolicy, FD_Ledger }, () => {
+      this.watchBalance()
+    })
   }
 
   getBalance = () => {
-    const { ledgerAddress, customerAddress } = this.state
+    const acc1 = web3.eth.accounts[0]
+    const customerAddress = acc1
 
-    ledgerAddress &&
-      eth.getBalance(ledgerAddress, (err, result) => {
-        if (err) return
-        const ledgerBalance = web3.fromWei(result, "ether").toString()
-        this.setState({ ledgerBalance })
-      })
+    this.setState({ customerAddress }, () => {
+      const { ledgerAddress, customerAddress } = this.state
 
-    customerAddress &&
-      eth.getBalance(customerAddress, (err, result) => {
-        if (err) return
-        const customerBalance = web3.fromWei(result, "ether").toString()
-        this.setState({ customerBalance })
-      })
+      ledgerAddress &&
+        eth.getBalance(ledgerAddress, (err, result) => {
+          if (err) return
+          const ledgerBalance = web3.fromWei(result, "ether").toString()
+          this.setState({ ledgerBalance })
+        })
+
+      customerAddress &&
+        eth.getBalance(customerAddress, (err, result) => {
+          if (err) return
+          const customerBalance = web3.fromWei(result, "ether").toString()
+          this.setState({ customerBalance })
+        })
+    })
   }
 
   watchBalance = () => {
@@ -173,7 +186,7 @@ export default class App extends Component {
   }
 
   createDefaultPolicy = () => {
-    const { FD_NewPolicy } = this.state
+    const { FD_NewPolicy, customerAddress } = this.state
     _("[FD_NewPolicy]", FD_NewPolicy)
 
     const now = moment()
@@ -207,7 +220,7 @@ export default class App extends Component {
       customerId,
       {
         gas: 4476768,
-        from: acc1,
+        from: customerAddress,
         value: web3.toWei(premium, "ether")
       },
       (err, result) => {
@@ -318,7 +331,7 @@ export default class App extends Component {
   }
 
   createNewPolicy = () => {
-    const { carrierFlightNumber, premium } = this.state
+    const { carrierFlightNumber, premium, customerAddress } = this.state
 
     const pending = true
     this.setState({ pending })
@@ -351,7 +364,7 @@ export default class App extends Component {
       {
         value,
         gas: 4476768,
-        from: acc1
+        from: customerAddress
       },
       (err, result) => {
         if (err) return _(err.message)
@@ -456,9 +469,23 @@ export default class App extends Component {
     })
   }
 
-  sendFund = () => {
-    const { fundedAddress, fundedAmount } = this.state
-    console.log("[fundedAddress, fundedAmount]", fundedAddress, fundedAmount)
+  sendFund = async () => {
+    const { mockServerUrl, fundedAddress, fundedAmount } = this.state
+    const resData = await callSendFund(mockServerUrl, fundedAddress, fundedAmount)
+    if (!resData || !resData.txHash) return window.alert("Send fail")
+
+    const { txHash } = resData
+    window.alert(`Transaction Hash: ${txHash}`)
+
+    this.getBalance()
+  }
+
+  updateConfig = () => {
+    this.updateContractInstance()
+  }
+
+  readAccountBalance = () => {
+    this.getBalance()
   }
 
   render() {
@@ -474,8 +501,15 @@ export default class App extends Component {
       customerAddress,
       customerBalance,
       fundedAddress,
-      fundedAmount
+      fundedAmount,
+      mockServerUrl,
+      newPolicyAddress
     } = this.state
+
+    const selectAirports = demoAirports.map(airport => {
+      const { name, code } = airport
+      return <MenuItem value={code} key={code} primaryText={name} />
+    })
 
     return (
       <MuiThemeProvider>
@@ -599,7 +633,7 @@ export default class App extends Component {
             </Tab>
             <Tab label="Debug">
               {/* Funding */}
-              <Paper zDepth={1} style={s.mockServerRoot}>
+              <Paper zDepth={1} style={s.fundingRoot}>
                 <div>
                   <div style={s.fundTitle}>Funding</div>
                   <div>
@@ -622,6 +656,45 @@ export default class App extends Component {
                     <div style={s.applySpaceDiv} />
                     <RaisedButton label={"Apply"} primary={true} onClick={this.sendFund} />
                   </div>
+                </div>
+              </Paper>
+
+              {/* Config*/}
+              <Paper zDepth={1} style={s.configRoot}>
+                <div style={s.fundTitle}>Config</div>
+                <div>
+                  <TextField
+                    floatingLabelText={"Mock Server URL"}
+                    value={mockServerUrl}
+                    onChange={this.storeTextField("mockServerUrl")}
+                  />
+                </div>
+                <div>
+                  <TextField
+                    floatingLabelText={"Contract NewPolicy Address"}
+                    value={newPolicyAddress}
+                    onChange={this.storeTextField("newPolicyAddress")}
+                  />
+                </div>
+                <div>
+                  <TextField
+                    floatingLabelText={"Contract Ledger Address"}
+                    value={ledgerAddress}
+                    onChange={this.storeTextField("ledgerAddress")}
+                  />
+                </div>
+
+                <div style={s.applyBtnDiv}>
+                  <div style={s.applySpaceDiv} />
+                  <RaisedButton label={"Update contract"} primary={true} onClick={this.updateConfig} />
+                </div>
+              </Paper>
+
+              {/* Debug */}
+              <Paper zDepth={1} style={s.debugRoot}>
+                <div style={s.fundTitle}>Debug</div>
+                <div>
+                  <RaisedButton label={"Read Account Balance"} primary={true} onClick={this.readAccountBalance} />
                 </div>
               </Paper>
 

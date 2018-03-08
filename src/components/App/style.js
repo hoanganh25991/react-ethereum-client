@@ -84,7 +84,7 @@ export const style = {
   flightProgressDiv: {
     padding: `${_5px}px ${_0px}`
   },
-  mockServerRoot: {
+  fundingRoot: {
     padding: _20px,
     margin: _20px,
     position: "relative",
@@ -95,5 +95,17 @@ export const style = {
     fontSize: _1d4em,
     textAlign: "center",
     opacity: _0d8opacity
+  },
+  configRoot: {
+    padding: _20px,
+    margin: _20px,
+    position: "relative",
+    display: "inline-block"
+  },
+  debugRoot: {
+    padding: _20px,
+    margin: _20px,
+    position: "relative",
+    display: "inline-block"
   }
 }
