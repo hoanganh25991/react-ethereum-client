@@ -5,7 +5,7 @@ const _5px = 5
 const _10px = 10
 const _15px = 15
 const _30px = 30
-const _350px = 350
+const _350px = 500
 const _500px = 500
 const _550px = 550
 const _200px = 200
@@ -123,8 +123,7 @@ export const style = {
   },
   getItemStyle: delayMinute => {
     const defaultS = {
-      // padding: _10px,
-      margin: _10px
+      margin: `${_10px} 0`
     }
 
     if (!delayMinute) return { ...{}, ...defaultS }

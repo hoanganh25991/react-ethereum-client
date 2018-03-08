@@ -566,7 +566,7 @@ export default class App extends Component {
       departureDate,
       departureTime,
       arrivalTime,
-      actualDelayInMinutes
+      actualDelayInMinutes = ""
     } = policy
 
     return (
@@ -597,12 +597,16 @@ export default class App extends Component {
             </TableRow>
             <TableRow>
               <TableRowColumn>Departure Time</TableRowColumn>
-              <TableRowColumn>{moment(departureTime, "X").format("HH:mm:ss")}</TableRowColumn>
+              <TableRowColumn>{moment(departureTime, "X").format("HH:mm")}</TableRowColumn>
             </TableRow>
-            <TableRow>
-              <TableRowColumn>Arrival Time</TableRowColumn>
-              <TableRowColumn>{moment(arrivalTime, "X").format("HH:mm:ss")}</TableRowColumn>
-            </TableRow>
+            {/*<TableRow>*/}
+            {/*<TableRowColumn>Departure Time</TableRowColumn>*/}
+            {/*<TableRowColumn>{moment(departureTime, "X").format("HH:mm:ss")}</TableRowColumn>*/}
+            {/*</TableRow>*/}
+            {/*<TableRow>*/}
+            {/*<TableRowColumn>Arrival Time</TableRowColumn>*/}
+            {/*<TableRowColumn>{moment(arrivalTime, "X").format("HH:mm:ss")}</TableRowColumn>*/}
+            {/*</TableRow>*/}
             <TableRow>
               <TableRowColumn>Delay In Minutes</TableRowColumn>
               <TableRowColumn>{actualDelayInMinutes} minutes</TableRowColumn>
@@ -720,10 +724,10 @@ export default class App extends Component {
                         departureDate,
                         departureTime,
                         arrivalTime,
-                        actualDelayInMinutes
+                        actualDelayInMinutes = ""
                       } = policy
 
-                      const policyBrief = `${fullName} - ${carrierFlightNumber} - ${departureDate}\nDelay In Minutes: ${actualDelayInMinutes}`
+                      const policyBrief = `${fullName}-${carrierFlightNumber}-${departureDate}-delay: ${actualDelayInMinutes} min`
                       const cb = this.showPolicyDelayColor(policyId)
                       const flightTlObj = { departureTime, arrivalTime, cb }
 
