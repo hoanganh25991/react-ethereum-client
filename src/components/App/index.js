@@ -598,20 +598,30 @@ export default class App extends Component {
               </div>
             </Tab>
             <Tab label="Debug">
-              {/* Mock Server */}
+              {/* Funding */}
               <Paper zDepth={1} style={s.mockServerRoot}>
-                <div style={s.accountBalanceTitle}>
-                  <TextField
-                    floatingLabelText={"Account Address"}
-                    value={fundedAddress}
-                    onChange={this.storeTextField("fundedAddress")}
-                  />
-                  <TextField
-                    floatingLabelText={"Fund Amount in ETH"}
-                    value={fundedAmount}
-                    onChange={this.storeTextField("fundedAmount")}
-                  />
-                  <RaisedButton label={"Apply"} primary={true} onClick={this.sendFund} />
+                <div>
+                  <div style={s.fundTitle}>Funding</div>
+                  <div>
+                    <TextField
+                      floatingLabelText={"Account Address"}
+                      value={fundedAddress}
+                      onChange={this.storeTextField("fundedAddress")}
+                    />
+                  </div>
+
+                  <div>
+                    <TextField
+                      floatingLabelText={"Fund Amount in ETH"}
+                      value={fundedAmount}
+                      onChange={this.storeTextField("fundedAmount")}
+                    />
+                  </div>
+
+                  <div style={s.applyBtnDiv}>
+                    <div style={s.applySpaceDiv} />
+                    <RaisedButton label={"Apply"} primary={true} onClick={this.sendFund} />
+                  </div>
                 </div>
               </Paper>
 

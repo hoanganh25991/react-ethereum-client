@@ -88,7 +88,7 @@ export const style = {
     padding: _20px,
     margin: _20px,
     position: "relative",
-    width: _500px
+    display: "inline-block"
   },
   fundTitle: {
     fontWeight: "bold",
