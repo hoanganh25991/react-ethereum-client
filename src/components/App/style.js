@@ -83,5 +83,17 @@ export const style = {
   },
   flightProgressDiv: {
     padding: `${_5px}px ${_0px}`
+  },
+  mockServerRoot: {
+    padding: _20px,
+    margin: _20px,
+    position: "relative",
+    width: _500px
+  },
+  fundTitle: {
+    fontWeight: "bold",
+    fontSize: _1d4em,
+    textAlign: "center",
+    opacity: _0d8opacity
   }
 }

@@ -65,6 +65,10 @@ export default class App extends Component {
       clock: null,
       flight: "",
 
+      // Fund
+      fundedAddress: "",
+      fundedAmount: "",
+
       // Account Balance
       ledgerAddress,
       ledgerBalance: null,
@@ -218,6 +222,11 @@ export default class App extends Component {
     this.setState({ transactionHash })
   }
 
+  storeAddress = e => {
+    const address = e.target.value
+    this.setState({ address })
+  }
+
   storeBlock = e => {
     const block = e.target.value
     this.setState({ block })
@@ -237,11 +246,6 @@ export default class App extends Component {
     })
   }
 
-  storeAddress = e => {
-    const address = e.target.value
-    this.setState({ address })
-  }
-
   checkBalance = () => {
     const { address } = this.state
 
@@ -255,13 +259,7 @@ export default class App extends Component {
     })
   }
 
-  storeDepartureDate = (e, value) => {
-    const departureDate = value
-    this.setState({ departureDate }, () => {
-      this.getAvailableFlights()
-    })
-  }
-
+  // Select Box
   storeDepartureAirport = (e, index, value) => {
     const departureAirport = value
     this.setState({ departureAirport }, () => {
@@ -281,18 +279,42 @@ export default class App extends Component {
     this.setState({ carrierFlightNumber })
   }
 
+  // Text Field
+  storeDepartureDate = (e, value) => {
+    const departureDate = value
+    this.setState({ departureDate }, () => {
+      this.getAvailableFlights()
+    })
+  }
+
   storeFlight = (e, value) => {
     const flight = value
     this.setState({ flight })
   }
 
-  getAvailableFlights = () => {
-    const { departureAirport, arrivalAirport, departureDate } = this.state
-    getScheduleByRoute(departureDate, departureAirport, arrivalAirport, this.updateAvailableFlights)
+  storeFullName = (e, value) => {
+    const fullName = value
+    this.setState({ fullName })
   }
 
-  updateAvailableFlights = flights => {
-    this.setState({ availableFlights: flights })
+  storeEmail = (e, value) => {
+    const email = value
+    this.setState({ email })
+  }
+
+  storePremium = (e, value) => {
+    const premium = value
+    this.setState({ premium })
+  }
+
+  storeTextField = stateKey => (e, value) => {
+    this.setState({ [stateKey]: value })
+  }
+
+  getAvailableFlights = () => {
+    const { departureAirport, arrivalAirport, departureDate } = this.state
+    const getCb = flights => this.setState({ availableFlights: flights })
+    getScheduleByRoute(departureDate, departureAirport, arrivalAirport, getCb)
   }
 
   createNewPolicy = () => {
@@ -410,21 +432,6 @@ export default class App extends Component {
     })
   }
 
-  storeFullName = (e, value) => {
-    const fullName = value
-    this.setState({ fullName })
-  }
-
-  storeEmail = (e, value) => {
-    const email = value
-    this.setState({ email })
-  }
-
-  storePremium = (e, value) => {
-    const premium = value
-    this.setState({ premium })
-  }
-
   readNewPolicyAllEvents = () => {
     const { FD_NewPolicy } = this.state
 
@@ -449,6 +456,11 @@ export default class App extends Component {
     })
   }
 
+  sendFund = () => {
+    const { fundedAddress, fundedAmount } = this.state
+    console.log("[fundedAddress, fundedAmount]", fundedAddress, fundedAmount)
+  }
+
   render() {
     const {
       departureAirport,
@@ -461,7 +473,8 @@ export default class App extends Component {
       ledgerBalance,
       customerAddress,
       customerBalance,
-      clock
+      fundedAddress,
+      fundedAmount
     } = this.state
 
     return (
@@ -585,6 +598,23 @@ export default class App extends Component {
               </div>
             </Tab>
             <Tab label="Debug">
+              {/* Mock Server */}
+              <Paper zDepth={1} style={s.mockServerRoot}>
+                <div style={s.accountBalanceTitle}>
+                  <TextField
+                    floatingLabelText={"Account Address"}
+                    value={fundedAddress}
+                    onChange={this.storeTextField("fundedAddress")}
+                  />
+                  <TextField
+                    floatingLabelText={"Fund Amount in ETH"}
+                    value={fundedAmount}
+                    onChange={this.storeTextField("fundedAmount")}
+                  />
+                  <RaisedButton label={"Apply"} primary={true} onClick={this.sendFund} />
+                </div>
+              </Paper>
+
               <div>
                 <TextField floatingLabelText={"Flight"} value={this.flight} onChange={this.storeFlight} />
                 <RaisedButton label={"Check Flight"} primary={true} onClick={this.checkFlight} />
