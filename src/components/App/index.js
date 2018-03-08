@@ -20,7 +20,7 @@ import { Table, TableBody, TableHeader, TableHeaderColumn, TableRow, TableRowCol
 import FD_LedgerJson from "./../../built-contracts/FlightDelayLedger.json"
 import { Tabs, Tab } from "material-ui/Tabs"
 import FlightTimeLine from "../FlightTimeLine"
-import { callFakeStatus, callSendFund } from "../../api/sendFund"
+import { callFakeStatus, callFlightStatus, callSendFund } from "../../api/sendFund"
 
 const _ = console.log
 const web3 = window.web3
@@ -501,6 +501,33 @@ export default class App extends Component {
     window.alert(`Update success`)
   }
 
+  showPolicyDelayColor = policyId => async () => {
+    const { policies } = this.state
+    const policy = policies.filter(p => p.policyId === policyId)[0]
+    if (!policy) return window.alert(`Can find back policy: ${policyId}`)
+
+    const { carrierFlightNumber } = policy
+    const { mockServerUrl } = this.state
+    const resData = await callFlightStatus(mockServerUrl, carrierFlightNumber)
+
+    if (!resData || !resData.flightStatuses) return
+
+    const { flightStatuses } = resData
+
+    try {
+      const actualDelayInMinutes = flightStatuses[0]["delays"]["arrivalGateDelayMinutes"]
+      const newPolicy = { ...policy, actualDelayInMinutes }
+      const newPolicies = policies.reduce((carry, policy) => {
+        const isSame = policy.policyId === newPolicy.policyId
+        const pushed = isSame ? newPolicy : policy
+        carry.push(pushed)
+        return carry
+      }, [])
+
+      this.setState({ polices: newPolicies })
+    } catch (err) {}
+  }
+
   render() {
     const {
       departureAirport,
@@ -603,7 +630,8 @@ export default class App extends Component {
                       } = policy
 
                       const policyBrief = `${fullName} - ${carrierFlightNumber} : ${departureDate}`
-                      const flightTlObj = { departureTime, arrivalTime }
+                      const cb = this.showPolicyDelayColor(policyId)
+                      const flightTlObj = { departureTime, arrivalTime, cb }
 
                       return (
                         <ListItem
