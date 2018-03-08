@@ -21,11 +21,13 @@ import FD_LedgerJson from "./../../built-contracts/FlightDelayLedger.json"
 import { Tabs, Tab } from "material-ui/Tabs"
 import FlightTimeLine from "../FlightTimeLine"
 import { callFakeStatus, callFlightStatus, callSendFund } from "../../api/sendFund"
-
+import Dialog from "material-ui/Dialog"
+import FlatButton from "material-ui/FlatButton"
 const _ = console.log
 const web3 = window.web3
 const eth = web3.eth
 const acc1TotalEth = 10
+const MOCK_PORT = 3456
 
 let custom_alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 const fdHash = new HashIds("", 7, custom_alphabet)
@@ -33,6 +35,9 @@ const fdHash = new HashIds("", 7, custom_alphabet)
 export default class App extends Component {
   constructor(props) {
     super(props)
+
+    const l = window.location
+    const mockServerUrl = `${l.protocol}//${l.hostname}:${MOCK_PORT}`
 
     this.state = {
       // New Policy
@@ -48,9 +53,13 @@ export default class App extends Component {
       fundedAmount: "",
 
       // Config
-      mockServerUrl: window.location.href,
+      mockServerUrl,
       newPolicyAddress: "0x29f70a7278dc2dfdce8767cf8302f22fea4191dc",
       ledgerAddress: "0xd9a40b118f944bd5885da4e163fbfdda14707ffb",
+
+      // Dialog
+      openCertificate: false,
+      dialogData: null,
 
       // Fake Status
       fakeCarrier: "",
@@ -82,6 +91,16 @@ export default class App extends Component {
     this.updateContractInstance()
     this.wait(this.getBalance)
   }
+
+  handleOpen = () => {
+    this.setState({ openCertificate: true })
+  }
+
+  handleClose = () => {
+    this.setState({ openCertificate: false })
+  }
+
+  actions = [<FlatButton label="Ok" primary={true} onClick={this.handleClose} />]
 
   wait = cb => {
     // First run
@@ -527,8 +546,75 @@ export default class App extends Component {
 
       console.log("[newPolicies]", newPolicies)
 
-      this.setState({ polices: newPolicies })
+      this.setState({ policies: newPolicies })
     } catch (err) {}
+  }
+
+  openPolicyDetailDialog = policy => () => {
+    this.setState({ dialogData: { policy } }, () => {
+      this.handleOpen()
+    })
+  }
+
+  renderDialogContent = policy => {
+    if (!policy) return null
+
+    const {
+      policyId,
+      fullName,
+      carrierFlightNumber,
+      departureDate,
+      departureTime,
+      arrivalTime,
+      actualDelayInMinutes
+    } = policy
+
+    return (
+      <div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHeaderColumn>Key</TableHeaderColumn>
+              <TableHeaderColumn>Value</TableHeaderColumn>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            <TableRow>
+              <TableRowColumn>Policy Id</TableRowColumn>
+              <TableRowColumn>{policyId}</TableRowColumn>
+            </TableRow>
+            <TableRow>
+              <TableRowColumn>Full Name</TableRowColumn>
+              <TableRowColumn>{fullName}</TableRowColumn>
+            </TableRow>
+            <TableRow>
+              <TableRowColumn>Carrier Flight Number</TableRowColumn>
+              <TableRowColumn>{carrierFlightNumber}</TableRowColumn>
+            </TableRow>
+            <TableRow>
+              <TableRowColumn>Departure Date</TableRowColumn>
+              <TableRowColumn>{departureDate}</TableRowColumn>
+            </TableRow>
+            <TableRow>
+              <TableRowColumn>Departure Time</TableRowColumn>
+              <TableRowColumn>{moment(departureTime, "X").format("HH:mm:ss")}</TableRowColumn>
+            </TableRow>
+            <TableRow>
+              <TableRowColumn>Arrival Time</TableRowColumn>
+              <TableRowColumn>{moment(arrivalTime, "X").format("HH:mm:ss")}</TableRowColumn>
+            </TableRow>
+            <TableRow>
+              <TableRowColumn>Delay In Minutes</TableRowColumn>
+              <TableRowColumn>{actualDelayInMinutes} minutes</TableRowColumn>
+            </TableRow>
+            <TableRow>
+              <TableRowColumn>Compensation</TableRowColumn>
+              <TableRowColumn>xxx</TableRowColumn>
+            </TableRow>
+          </TableBody>
+        </Table>
+      </div>
+    )
   }
 
   render() {
@@ -549,8 +635,12 @@ export default class App extends Component {
       newPolicyAddress,
       fakeCarrier,
       fakeFlight,
-      fakeDelayInMinutes
+      fakeDelayInMinutes,
+      openCertificate,
+      dialogData
     } = this.state
+
+    const dialogPolicy = dialogData && dialogData.policy
 
     const selectAirports = demoAirports.map(airport => {
       const { name, code } = airport
@@ -633,11 +723,13 @@ export default class App extends Component {
                         actualDelayInMinutes
                       } = policy
 
-                      const policyBrief = `${fullName} - ${carrierFlightNumber} : ${departureDate}`
+                      const policyBrief = `${fullName} - ${carrierFlightNumber} - ${departureDate}`
                       const cb = this.showPolicyDelayColor(policyId)
                       const flightTlObj = { departureTime, arrivalTime, cb }
 
+                      console.log(actualDelayInMinutes)
                       const itemStyle = s.getItemStyle(actualDelayInMinutes)
+                      console.log("[itemStyle]", itemStyle)
 
                       return (
                         <ListItem
@@ -645,11 +737,13 @@ export default class App extends Component {
                           primaryText={policyId}
                           secondaryText={policyBrief}
                           leftIcon={<AssignMent />}
+                          style={itemStyle}
+                          onClick={this.openPolicyDetailDialog(policy)}
                         >
                           <div style={s.flightProgressDiv}>
                             <FlightTimeLine {...flightTlObj} />
                           </div>
-                          <div />
+                          <div>Delay In Minutes: {actualDelayInMinutes}</div>
                         </ListItem>
                       )
                     })}
@@ -831,6 +925,15 @@ export default class App extends Component {
               </div>
             </Tab>
           </Tabs>
+          <Dialog
+            title={"Policy Certificate"}
+            actions={this.actions}
+            modal={false}
+            open={openCertificate}
+            onRequestClose={this.handleClose}
+          >
+            {this.renderDialogContent(dialogPolicy)}
+          </Dialog>
         </div>
       </MuiThemeProvider>
     )

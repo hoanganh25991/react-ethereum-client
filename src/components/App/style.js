@@ -1,4 +1,4 @@
-import { red600 as late15C, red800 as late30C, red900 as late45C } from "material-ui/styles/colors"
+import { cyan50 as late15C, cyan100 as late30C, cyan200 as late45C } from "material-ui/styles/colors"
 
 const _0px = 0
 const _5px = 5
