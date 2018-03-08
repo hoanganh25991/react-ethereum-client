@@ -502,6 +502,7 @@ export default class App extends Component {
   }
 
   showPolicyDelayColor = policyId => async () => {
+    _("[showPolicyDelayColor]")
     const { policies } = this.state
     const policy = policies.filter(p => p.policyId === policyId)[0]
     if (!policy) return window.alert(`Can find back policy: ${policyId}`)
@@ -523,6 +524,8 @@ export default class App extends Component {
         carry.push(pushed)
         return carry
       }, [])
+
+      console.log("[newPolicies]", newPolicies)
 
       this.setState({ polices: newPolicies })
     } catch (err) {}

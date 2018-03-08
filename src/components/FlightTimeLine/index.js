@@ -5,21 +5,28 @@ import LinearProgress from "material-ui/LinearProgress"
 export default class FlightTimeLine extends PureComponent {
   constructor() {
     super()
+  }
+
+  componentDidMount() {
     this.setUpClock()
   }
 
   setUpClock = () => {
-    setInterval(() => {
+    const intervalId = setInterval(() => {
       const clock = new Date().getTime()
       this.setState({ clock })
     }, 300)
+
+    this.setState({ intervalId })
   }
 
-  clearClock = () => {
-    const { clock } = this.state
-    if (!clock) return
-    clearInterval(clock)
-    this.setState({ clock: null })
+  clearInterval = () => {
+    const { intervalId } = this.state
+    const { cb } = this.props
+    if (!intervalId) return
+
+    clearInterval(intervalId)
+    this.setState({ intervalId: null }, cb)
   }
 
   getPercent = (departureTime, arrivalTime) => {
@@ -29,7 +36,7 @@ export default class FlightTimeLine extends PureComponent {
     const percent = progress / total * 100
 
     if (percent > 100) {
-      this.clearClock()
+      this.clearInterval()
       return 100
     }
 
