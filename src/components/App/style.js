@@ -1,3 +1,5 @@
+import { red600 as late15C, red800 as late30C, red900 as late45C } from "material-ui/styles/colors"
+
 const _0px = 0
 const _5px = 5
 const _10px = 10
@@ -118,5 +120,30 @@ export const style = {
     margin: _20px,
     position: "relative",
     display: "inline-block"
+  },
+  getItemStyle: delayMinute => {
+    if (!delayMinute) return {}
+
+    const late15 = delayMinute >= 15 && delayMinute < 30
+    const late30 = delayMinute >= 30 && delayMinute < 45
+    const late45 = delayMinute >= 45
+
+    switch (true) {
+      case late15: {
+        return {
+          backgroundColor: late15C
+        }
+      }
+      case late30: {
+        return {
+          backgroundColor: late30C
+        }
+      }
+      case late45: {
+        return {
+          backgroundColor: late45C
+        }
+      }
+    }
   }
 }

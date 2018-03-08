@@ -629,12 +629,15 @@ export default class App extends Component {
                         carrierFlightNumber,
                         departureDate,
                         departureTime,
-                        arrivalTime
+                        arrivalTime,
+                        actualDelayInMinutes
                       } = policy
 
                       const policyBrief = `${fullName} - ${carrierFlightNumber} : ${departureDate}`
                       const cb = this.showPolicyDelayColor(policyId)
                       const flightTlObj = { departureTime, arrivalTime, cb }
+
+                      const itemStyle = s.getItemStyle(actualDelayInMinutes)
 
                       return (
                         <ListItem
@@ -646,6 +649,7 @@ export default class App extends Component {
                           <div style={s.flightProgressDiv}>
                             <FlightTimeLine {...flightTlObj} />
                           </div>
+                          <div />
                         </ListItem>
                       )
                     })}
