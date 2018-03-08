@@ -20,7 +20,7 @@ import { Table, TableBody, TableHeader, TableHeaderColumn, TableRow, TableRowCol
 import FD_LedgerJson from "./../../built-contracts/FlightDelayLedger.json"
 import { Tabs, Tab } from "material-ui/Tabs"
 import FlightTimeLine from "../FlightTimeLine"
-import { callSendFund } from "../../api/sendFund"
+import { callFakeStatus, callSendFund } from "../../api/sendFund"
 
 const _ = console.log
 const web3 = window.web3
@@ -51,6 +51,11 @@ export default class App extends Component {
       mockServerUrl: window.location.href,
       newPolicyAddress: "0x29f70a7278dc2dfdce8767cf8302f22fea4191dc",
       ledgerAddress: "0xd9a40b118f944bd5885da4e163fbfdda14707ffb",
+
+      // Fake Status
+      fakeCarrier: "",
+      fakeFlight: "",
+      fakeDelayInMinutes: "",
 
       // Account Balance
       ledgerBalance: null,
@@ -488,6 +493,14 @@ export default class App extends Component {
     this.getBalance()
   }
 
+  fakeStatus = async () => {
+    const { mockServerUrl, fakeCarrier, fakeFlight, fakeDelayInMinutes } = this.state
+    const resData = await callFakeStatus(mockServerUrl, fakeCarrier, fakeFlight, fakeDelayInMinutes)
+    if (!resData || !resData.flightStatuses) return window.alert("Fake fail")
+
+    window.alert(`Update success`)
+  }
+
   render() {
     const {
       departureAirport,
@@ -503,7 +516,10 @@ export default class App extends Component {
       fundedAddress,
       fundedAmount,
       mockServerUrl,
-      newPolicyAddress
+      newPolicyAddress,
+      fakeCarrier,
+      fakeFlight,
+      fakeDelayInMinutes
     } = this.state
 
     const selectAirports = demoAirports.map(airport => {
@@ -695,6 +711,35 @@ export default class App extends Component {
                 <div style={s.fundTitle}>Debug</div>
                 <div>
                   <RaisedButton label={"Read Account Balance"} primary={true} onClick={this.readAccountBalance} />
+                </div>
+              </Paper>
+
+              {/* Fake Flight Status */}
+              <Paper zDepth={1} style={s.fakeStatusRoot}>
+                <div style={s.fundTitle}>Fake status</div>
+                <div>
+                  <TextField
+                    floatingLabelText={"Carrier"}
+                    value={fakeCarrier}
+                    onChange={this.storeTextField("fakeCarrier")}
+                  />
+                </div>
+                <div>
+                  <TextField
+                    floatingLabelText={"Flight"}
+                    value={fakeFlight}
+                    onChange={this.storeTextField("fakeFlight")}
+                  />
+                </div>
+                <div>
+                  <TextField
+                    floatingLabelText={"Delay in Minutes"}
+                    value={fakeDelayInMinutes}
+                    onChange={this.storeTextField("fakeDelayInMinutes")}
+                  />
+                </div>
+                <div>
+                  <RaisedButton label={"Apply"} primary={true} onClick={this.fakeStatus} />
                 </div>
               </Paper>
 

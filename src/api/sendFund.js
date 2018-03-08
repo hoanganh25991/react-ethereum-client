@@ -7,6 +7,7 @@ const axios = Oaxios.create({
 })
 
 const SEND_FUND = "sendFund"
+const FAKE_STATUS = "fakeStatus"
 
 const getEndpoint = (_serverUrl, path) => {
   const hasSlash = _serverUrl.endsWith("/")
@@ -18,6 +19,19 @@ export const callSendFund = async (serverUrl, address, amount) => {
   const endpoint = getEndpoint(serverUrl, SEND_FUND)
   const resData = await axios
     .get(`${endpoint}/${address}/${amount}`)
+    .then(res => res.data)
+    .catch(err => {
+      console.log("[axios call][ERR]", err)
+      return null
+    })
+
+  return resData
+}
+
+export const callFakeStatus = async (serverUrl, carrier, flight, delay) => {
+  const endpoint = getEndpoint(serverUrl, FAKE_STATUS)
+  const resData = await axios
+    .get(`${endpoint}/${carrier}/${flight}/${delay}`)
     .then(res => res.data)
     .catch(err => {
       console.log("[axios call][ERR]", err)

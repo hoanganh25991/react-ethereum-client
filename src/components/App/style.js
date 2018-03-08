@@ -107,5 +107,11 @@ export const style = {
     margin: _20px,
     position: "relative",
     display: "inline-block"
+  },
+  fakeStatusRoot: {
+    padding: _20px,
+    margin: _20px,
+    position: "relative",
+    display: "inline-block"
   }
 }
