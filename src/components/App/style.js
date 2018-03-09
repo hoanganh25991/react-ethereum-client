@@ -52,7 +52,8 @@ export const style = {
   listPolicyRoot: {
     width: _350px,
     padding: _15px,
-    margin: _15px
+    margin: _15px,
+    position: "relative"
   },
   listPolicyTitle: {
     fontWeight: "bold",

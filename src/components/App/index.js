@@ -47,6 +47,7 @@ export default class App extends Component {
       address: "",
       block: "",
       pending: false,
+      readlistPending: false,
       clock: null,
       flight: "",
 
@@ -743,6 +744,7 @@ export default class App extends Component {
 
   getPoliciesFromDb = async () => {
     const policies = []
+    this.setState({ readlistPending: true })
     try {
       const { FD_Db } = this.state
       _("[FD_Db]", FD_Db)
@@ -753,7 +755,7 @@ export default class App extends Component {
     } catch (err) {
       _("[getPoliciesFromDb] Setup loop fail")
     } finally {
-      this.setState({ policies })
+      this.setState({ policies, readlistPending: false })
     }
   }
 
@@ -784,7 +786,8 @@ export default class App extends Component {
       fakeDelayInMinutes,
       openCertificate,
       openDebugMoreTools,
-      dbAddress
+      dbAddress,
+      readlistPending
     } = this.state
 
     const selectAirports = demoAirports.map(airport => {
@@ -855,6 +858,11 @@ export default class App extends Component {
                 </Paper>
                 {/* List Policy */}
                 <Paper zDepth={1} style={s.listPolicyRoot}>
+                  {readlistPending && (
+                    <div style={s.newPolicyPending}>
+                      <CircularProgress size={60} thickness={7} />
+                    </div>
+                  )}
                   <div style={s.listPolicyTitle}>Policy List</div>
                   <List>
                     {policies.map(policy => {

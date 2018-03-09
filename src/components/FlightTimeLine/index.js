@@ -30,6 +30,9 @@ export default class FlightTimeLine extends PureComponent {
   }
 
   getPercent = (departureTime, arrivalTime) => {
+    const wrongFormat = isNaN(departureTime) || isNaN(arrivalTime)
+    if (wrongFormat) return 100
+
     const nowTimestamp = +moment().format("X")
     const total = arrivalTime - departureTime
     const progress = nowTimestamp - departureTime
