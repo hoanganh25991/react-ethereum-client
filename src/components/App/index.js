@@ -407,6 +407,8 @@ export default class App extends Component {
 
         const txHash = result
         _("[createNewPolicy][txHash]", result)
+        const pending = false
+        this.setState({ pending })
 
         const eventWait = this.checkPolicyAppliedOrDeclineByEvent(txHash)
 
@@ -442,9 +444,8 @@ export default class App extends Component {
           .catch(err => err)
 
         doneWait.then(() => {
-          const pending = false
-          this.setState({ pending })
-
+          // const pending = false
+          // this.setState({ pending })
           /* Debug check flight arrive */
           // setInterval(() => {
           //   const diff = +moment().format("X") - departureTime
@@ -683,51 +684,50 @@ export default class App extends Component {
       departureYearMonthDay: Buffer(_risk[1].slice(2), "hex")
         .toString()
         .replace(/\0/g, ""),
-      arrivalTime: new Date(_risk[2].toNumber() * 1000).toLocaleString("de"),
+      arrivalTime: new Date(_risk[2].toNumber() * 1000).toLocaleString(),
       delayInMinutes: _risk[3].toNumber(),
       delay: _risk[4].toNumber(),
       cumulatedWeightedPremium: web3.fromWei(_risk[5]).toFixed(2),
       premiumMultiplier: _risk[6].toFixed(2)
     }
 
+    _("[policyFormatterLong]", frontendP)
     return frontendP
   }
 
   readPolicyIdFromDB = async id => {
+    _("[readPolicyIdFromDB] Try at id:", id)
+
     const { FD_Db, policies } = this.state
 
-    const policy = await new Promise((resolve, reject) => {
-      FD_Db.policies(id, (e, p) => {
-        if (e || !p) return reject(null)
-        resolve(p)
-      })
-    })
-
+    const policy = await new Promise((resolve, reject) =>
+      FD_Db.policies(id, (e, p) => (e || !p ? resolve(null) : resolve(p)))
+    )
     if (!policy) return
 
-    const risk = await new Promise((resolve, reject) => {
-      FD_Db.policies(policy[2], (e, r) => {
-        if (e || !r) return reject(null)
-        resolve(r)
-      })
-    })
-
+    const riskId = policy[2]
+    const risk = await new Promise((resolve, reject) =>
+      FD_Db.risks(riskId, (e, r) => (e || !r ? resolve(null) : resolve(r)))
+    )
     if (!risk) return
 
     const fP = this.policyFormatterLong(id, policy, risk)
-    _("[fP]", fP)
+    const nexId = id + 1
 
-    const nexId = id++
     return this.readPolicyIdFromDB(nexId)
   }
 
   getPoliciesFromDb = async () => {
-    const { FD_Db } = this.state
-    _("[FD_Db]", FD_Db)
+    try {
+      const { FD_Db } = this.state
+      _("[FD_Db]", FD_Db)
 
-    const startId = 0
-    const wait = this.readPolicyIdFromDB(startId)
-    wait.then(() => _("[getPoliciesFromDb] Loop finished"))
+      const startId = 0
+      await this.readPolicyIdFromDB(startId)
+      _("[getPoliciesFromDb] Loop finished")
+    } catch (err) {
+      _("[getPoliciesFromDb] Setup loop fail")
+    }
   }
 
   handleDebugMoreTools = () => {
