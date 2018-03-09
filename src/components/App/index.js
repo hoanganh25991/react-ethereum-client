@@ -366,11 +366,11 @@ export default class App extends Component {
     getScheduleByRoute(departureDate, departureAirport, arrivalAirport, getCb)
   }
 
-  createNewPolicy = () => {
+  createNewPolicy = async () => {
     const { carrierFlightNumber, premium, customerAddress } = this.state
 
-    const pending = true
-    this.setState({ pending })
+    // Ok pending load
+    this.setState({ pending: true })
 
     const { FD_NewPolicy } = this.state
     _("[FD_NewPolicy]", FD_NewPolicy)
@@ -390,70 +390,53 @@ export default class App extends Component {
       customerId
     )
 
-    FD_NewPolicy.newPolicy(
+    const txHash = await new Promise((resolve, reject) => {
+      FD_NewPolicy.newPolicy(
+        carrierFlightNumber,
+        departureDate,
+        departureTime,
+        arrivalTime,
+        currencyETH,
+        customerId,
+        {
+          value,
+          gas: 4476768,
+          from: customerAddress
+        },
+        (e, result) => (e ? resolve(null) : resolve(result))
+      )
+    })
+
+    if (!txHash) return window.alert("Fail to send transaction")
+    _("[createNewPolicy][txHash]", txHash)
+
+    // Turn off pending
+    this.setState({ pending: false })
+
+    const event = await this.checkPolicyAppliedOrDeclineByEvent(txHash)
+    if (!event) return _("No LogPolicyApplied")
+
+    const e1 = event
+    const { args } = e1
+    const { _policyId } = args
+    const { fullName, email } = this.state
+
+    const certificate = {
+      policyId: fdHash.encode(_policyId),
       carrierFlightNumber,
       departureDate,
       departureTime,
       arrivalTime,
-      currencyETH,
-      customerId,
-      {
-        value,
-        gas: 4476768,
-        from: customerAddress
-      },
-      (err, result) => {
-        if (err) return _(err.message)
+      fullName,
+      email
+    }
 
-        const txHash = result
-        _("[createNewPolicy][txHash]", result)
-        const pending = false
-        this.setState({ pending })
+    _("[createNewPolicy][certificate]", certificate)
 
-        const eventWait = this.checkPolicyAppliedOrDeclineByEvent(txHash)
-
-        const doneWait = eventWait
-          .then(event => {
-            if (!event) return _("No LogPolicyApplied")
-            _("[createNewPolicy][LogPolicyApplied]", event)
-
-            const e1 = event
-            if (!e1) return _("[createNewPolicy][e1]", e1)
-
-            const { args } = e1
-            const { _policyId } = args
-            const { fullName, email } = this.state
-
-            const certificate = {
-              policyId: fdHash.encode(_policyId),
-              carrierFlightNumber,
-              departureDate,
-              departureTime,
-              arrivalTime,
-              fullName,
-              email
-            }
-
-            _("[createNewPolicy][certificate]", certificate)
-
-            // Update Policies
-            const { policies: curr } = this.state
-            const policies = [...curr, certificate]
-            this.setState({ policies })
-          })
-          .catch(err => err)
-
-        doneWait.then(() => {
-          // const pending = false
-          // this.setState({ pending })
-          /* Debug check flight arrive */
-          // setInterval(() => {
-          //   const diff = +moment().format("X") - departureTime
-          //   _("[TimeElapse]", diff)
-          // }, 1000)
-        })
-      }
-    )
+    // Update Policies
+    const { policies: curr } = this.state
+    const policies = [...curr, certificate]
+    // this.setState({ policies })
   }
 
   checkPolicyAppliedOrDeclineByEvent = txHash => {
@@ -461,7 +444,7 @@ export default class App extends Component {
       eth.getTransactionReceipt(txHash, (err, result) => {
         if (err) {
           _(err.message)
-          return reject(null)
+          return resolve(null)
         }
 
         const { blockNumber } = result
@@ -473,7 +456,7 @@ export default class App extends Component {
         events.watch((err, result) => {
           if (err) {
             _(err.message)
-            return reject(null)
+            return resolve(null)
           }
 
           resolve(result)
