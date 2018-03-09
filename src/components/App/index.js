@@ -603,7 +603,7 @@ export default class App extends Component {
       5: 50
     }
     const compensate = (premium * WEIGHT_PATTERN[level] * 10000 / 22560).toFixed(2)
-    return Math.min(compensate, 1.1)
+    return Math.min(compensate, 1.1).toFixed(2)
   }
 
   renderDialogContent = () => {
