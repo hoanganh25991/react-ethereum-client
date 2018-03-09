@@ -637,9 +637,97 @@ export default class App extends Component {
     )
   }
 
-  getPolicies = () => {
+  policyFormatterLong = (policyId, _policy, _risk) => {
+    const statusToString = status => {
+      const sts = {
+        0: "Applied",
+        1: "Accepted",
+        2: "Revoked",
+        3: "Paid Out",
+        4: "Expired",
+        5: "Declined"
+      }
+      return sts[status]
+    }
+
+    const currencyToString = currency => {
+      const cur = {
+        0: "ETH",
+        1: "EUR",
+        2: "USD",
+        3: "GBP"
+      }
+      return cur[currency]
+    }
+
+    const frontendP = {
+      policyId,
+      customer: _policy[0],
+      state: statusToString(_policy[6].toNumber()),
+      premium: web3.fromWei(_policy[1]).toFixed(2),
+      riskId: _policy[2],
+      weight: _policy[3].toFixed(0),
+      calculatedPayout: web3.fromWei(_policy[4]).toFixed(2),
+      actualPayout: web3.fromWei(_policy[5]).toFixed(2),
+      stateTime: new Date(_policy[7].toNumber() * 1000).toLocaleString("de"),
+      stateMessage: Buffer.from(_policy[8].slice(2), "hex")
+        .toString()
+        .replace(/\0/g, ""),
+      currency: currencyToString(_policy[10]),
+      customerExternalId: Buffer.from(_policy[11].slice(2), "hex")
+        .toString()
+        .replace(/\0/g, ""),
+      carrierFlightNumber: Buffer(_risk[0].slice(2), "hex")
+        .toString()
+        .replace(/\0/g, ""),
+      departureYearMonthDay: Buffer(_risk[1].slice(2), "hex")
+        .toString()
+        .replace(/\0/g, ""),
+      arrivalTime: new Date(_risk[2].toNumber() * 1000).toLocaleString("de"),
+      delayInMinutes: _risk[3].toNumber(),
+      delay: _risk[4].toNumber(),
+      cumulatedWeightedPremium: web3.fromWei(_risk[5]).toFixed(2),
+      premiumMultiplier: _risk[6].toFixed(2)
+    }
+
+    return frontendP
+  }
+
+  readPolicyIdFromDB = async id => {
+    const { FD_Db, policies } = this.state
+
+    const policy = await new Promise((resolve, reject) => {
+      FD_Db.policies(id, (e, p) => {
+        if (e || !p) return reject(null)
+        resolve(p)
+      })
+    })
+
+    if (!policy) return
+
+    const risk = await new Promise((resolve, reject) => {
+      FD_Db.policies(policy[2], (e, r) => {
+        if (e || !r) return reject(null)
+        resolve(r)
+      })
+    })
+
+    if (!risk) return
+
+    const fP = this.policyFormatterLong(id, policy, risk)
+    _("[fP]", fP)
+
+    const nexId = id++
+    return this.readPolicyIdFromDB(nexId)
+  }
+
+  getPoliciesFromDb = async () => {
     const { FD_Db } = this.state
     _("[FD_Db]", FD_Db)
+
+    const startId = 0
+    const wait = this.readPolicyIdFromDB(startId)
+    wait.then(() => _("[getPoliciesFromDb] Loop finished"))
   }
 
   handleDebugMoreTools = () => {
@@ -916,7 +1004,7 @@ export default class App extends Component {
                   {openDebugMoreTools && (
                     <div>
                       <div>
-                        <button onClick={this.getPolicies}>Get Policies</button>
+                        <button onClick={this.getPoliciesFromDb}>Get Policies</button>
                       </div>
                       <div>
                         <TextField floatingLabelText={"Flight"} value={this.flight} onChange={this.storeFlight} />
