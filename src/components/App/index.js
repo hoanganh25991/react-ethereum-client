@@ -23,6 +23,8 @@ import FlightTimeLine from "../FlightTimeLine"
 import { callFakeStatus, callFlightStatus, callSendFund } from "../../api/sendFund"
 import Dialog from "material-ui/Dialog"
 import FlatButton from "material-ui/FlatButton"
+import FD_DatabaseJson from "../../built-contracts/FlightDelayDatabase.json"
+
 const _ = console.log
 const web3 = window.web3
 const eth = web3.eth
@@ -56,6 +58,10 @@ export default class App extends Component {
       mockServerUrl,
       newPolicyAddress: "0x09046d89cd80ef8dae2f9e6fe5702443c766020d",
       ledgerAddress: "0x7ebe9c2c498e88668f9419ec020d2107122009a6",
+      dbAddress: "0x6dd43be3c9774d0efeb4fc27f84a4479b94ec665",
+
+      // Debug
+      openDebugMoreTools: false,
 
       // Dialog
       openCertificate: false,
@@ -109,10 +115,11 @@ export default class App extends Component {
   }
 
   updateContractInstance = (cb = null) => {
-    const { newPolicyAddress, ledgerAddress } = this.state
+    const { newPolicyAddress, ledgerAddress, dbAddress } = this.state
 
     const { abi: newPolicyAbi } = FD_NewPolicyJson
     const { abi: ledgerAbi } = FD_LedgerJson
+    const { abi: dbAbi } = FD_DatabaseJson
 
     // NewPolicy Contract
     const FD_NewPolicyAbi = web3.eth.contract(newPolicyAbi)
@@ -122,7 +129,11 @@ export default class App extends Component {
     const FD_LedgerAbi = web3.eth.contract(ledgerAbi)
     const FD_Ledger = FD_LedgerAbi.at(ledgerAddress)
 
-    this.setState({ FD_NewPolicy, FD_Ledger }, () => {
+    // Database Contract
+    const FD_DbAbi = web3.eth.contract(dbAbi)
+    const FD_Db = FD_DbAbi.at(dbAddress)
+
+    this.setState({ FD_NewPolicy, FD_Ledger, FD_Db }, () => {
       this.watchBalance()
       if (cb) cb()
     })
@@ -626,6 +637,17 @@ export default class App extends Component {
     )
   }
 
+  getPolicies = () => {
+    const { FD_Db } = this.state
+    _("[FD_Db]", FD_Db)
+  }
+
+  handleDebugMoreTools = () => {
+    const { openDebugMoreTools: cur } = this.state
+    const openDebugMoreTools = !cur
+    this.setState({ openDebugMoreTools })
+  }
+
   render() {
     const {
       departureAirport,
@@ -646,7 +668,8 @@ export default class App extends Component {
       fakeFlight,
       fakeDelayInMinutes,
       openCertificate,
-      dialogData
+      dialogData,
+      openDebugMoreTools
     } = this.state
 
     const dialogPolicy = dialogData && dialogData.policy
@@ -886,50 +909,60 @@ export default class App extends Component {
                   <div>
                     <RaisedButton label={"Read Account Balance"} primary={true} onClick={this.readAccountBalance} />
                   </div>
-                </Paper>
+                  <div>
+                    <RaisedButton label={"More Tools..."} primary={true} onClick={this.handleDebugMoreTools} />
+                  </div>
 
-                {/*<div>*/}
-                {/*<TextField floatingLabelText={"Flight"} value={this.flight} onChange={this.storeFlight} />*/}
-                {/*<RaisedButton label={"Check Flight"} primary={true} onClick={this.checkFlight} />*/}
-                {/*</div>*/}
-                {/*<div>*/}
-                {/*<div style={s.oldDiv}>*/}
-                {/*<button onClick={this.toUnixTime}>To Unix Time</button>*/}
-                {/*</div>*/}
-                {/*<div style={s.oldDiv}>*/}
-                {/*<button onClick={this.createDefaultPolicy}>Create Default Policy</button>*/}
-                {/*</div>*/}
-                {/*<div style={s.oldDiv}>*/}
-                {/*<input*/}
-                {/*type={"text"}*/}
-                {/*placeholder={"Transaction Hash"}*/}
-                {/*value={this.state.transactionHash}*/}
-                {/*onChange={this.storeTransactionHash}*/}
-                {/*/>*/}
-                {/*<button onClick={this.checkHash}>Check Hash</button>*/}
-                {/*</div>*/}
-                {/*<div style={s.oldDiv}>*/}
-                {/*<input*/}
-                {/*type={"text"}*/}
-                {/*placeholder={"Address"}*/}
-                {/*value={this.state.address}*/}
-                {/*onChange={this.storeAddress}*/}
-                {/*/>*/}
-                {/*<button onClick={this.checkBalance}>Check Balance</button>*/}
-                {/*</div>*/}
-                {/*<div style={s.oldDiv}>*/}
-                {/*<input*/}
-                {/*type={"text"}*/}
-                {/*placeholder={"Block Number"}*/}
-                {/*value={this.state.block}*/}
-                {/*onChange={this.storeBlock}*/}
-                {/*/>*/}
-                {/*<button onClick={this.readNewPolicyEventAt}>Read NewPolicy Event</button>*/}
-                {/*</div>*/}
-                {/*<div style={s.oldDiv}>*/}
-                {/*<button onClick={this.readNewPolicyAllEvents}>Read NewPolicy All Events</button>*/}
-                {/*</div>*/}
-                {/*</div>*/}
+                  {openDebugMoreTools && (
+                    <div>
+                      <div>
+                        <button onClick={this.getPolicies}>Get Policies</button>
+                      </div>
+                      <div>
+                        <TextField floatingLabelText={"Flight"} value={this.flight} onChange={this.storeFlight} />
+                        <RaisedButton label={"Check Flight"} primary={true} onClick={this.checkFlight} />
+                      </div>
+                      <div>
+                        <div style={s.oldDiv}>
+                          <button onClick={this.toUnixTime}>To Unix Time</button>
+                        </div>
+                        <div style={s.oldDiv}>
+                          <button onClick={this.createDefaultPolicy}>Create Default Policy</button>
+                        </div>
+                        <div style={s.oldDiv}>
+                          <input
+                            type={"text"}
+                            placeholder={"Transaction Hash"}
+                            value={this.state.transactionHash}
+                            onChange={this.storeTransactionHash}
+                          />
+                          <button onClick={this.checkHash}>Check Hash</button>
+                        </div>
+                        <div style={s.oldDiv}>
+                          <input
+                            type={"text"}
+                            placeholder={"Address"}
+                            value={this.state.address}
+                            onChange={this.storeAddress}
+                          />
+                          <button onClick={this.checkBalance}>Check Balance</button>
+                        </div>
+                        <div style={s.oldDiv}>
+                          <input
+                            type={"text"}
+                            placeholder={"Block Number"}
+                            value={this.state.block}
+                            onChange={this.storeBlock}
+                          />
+                          <button onClick={this.readNewPolicyEventAt}>Read NewPolicy Event</button>
+                        </div>
+                        <div style={s.oldDiv}>
+                          <button onClick={this.readNewPolicyAllEvents}>Read NewPolicy All Events</button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </Paper>
               </div>
             </Tab>
           </Tabs>
