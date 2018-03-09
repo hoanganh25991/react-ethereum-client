@@ -437,14 +437,13 @@ export default class App extends Component {
     const { args } = e1
     const { _policyId } = args
 
+    const SHOULD_RETURN = true
+    const policyInDB = await this.readPolicyIdFromDB(_policyId.toString(), [], SHOULD_RETURN)
+
     const certificate = {
+      ...draft,
       policyId: _policyId.toString(),
-      carrierFlightNumber,
-      departureDate,
-      departureTime,
-      arrivalTime,
-      fullName,
-      email
+      actualPayout: policyInDB.actualPayout
     }
 
     this.setState({ policies: [...curr, certificate] })
@@ -591,6 +590,22 @@ export default class App extends Component {
     this.setState({ dialogData: { policy } }, this.handleOpen)
   }
 
+  computeCompensate = (delayInMinutes, premium) => {
+    if (!delayInMinutes) return 0
+
+    const level = Math.floor(+delayInMinutes / 15)
+    const WEIGHT_PATTERN = {
+      0: 0,
+      1: 10,
+      2: 20,
+      3: 30,
+      4: 50,
+      5: 50
+    }
+    const compensate = (premium * WEIGHT_PATTERN[level] * 10000 / 22560).toFixed(2)
+    return Math.min(compensate, 1.1)
+  }
+
   renderDialogContent = () => {
     const { dialogData } = this.state
     const policy = dialogData && dialogData.policy
@@ -604,10 +619,13 @@ export default class App extends Component {
       departureDate,
       departureTime,
       arrivalTime,
-      actualDelayInMinutes = ""
+      actualDelayInMinutes = "",
+      premium,
+      actualPayout = ""
     } = policy
 
     const departureTimeTitle = isNaN(departureTime) ? departureTime : moment(departureTime, "X").format("HH:mm")
+    const compensate = this.computeCompensate(actualDelayInMinutes, premium)
 
     return (
       <div>
@@ -652,8 +670,16 @@ export default class App extends Component {
               <TableRowColumn>{actualDelayInMinutes} minutes</TableRowColumn>
             </TableRow>
             <TableRow>
+              <TableRowColumn>Premium</TableRowColumn>
+              <TableRowColumn>{premium}</TableRowColumn>
+            </TableRow>
+            <TableRow>
               <TableRowColumn>Compensation</TableRowColumn>
-              <TableRowColumn>xxx</TableRowColumn>
+              <TableRowColumn>{compensate}</TableRowColumn>
+            </TableRow>
+            <TableRow>
+              <TableRowColumn>Actual Payout</TableRowColumn>
+              <TableRowColumn>{actualPayout}</TableRowColumn>
             </TableRow>
           </TableBody>
         </Table>
@@ -718,7 +744,7 @@ export default class App extends Component {
     return frontendP
   }
 
-  readPolicyIdFromDB = async (id, policies) => {
+  readPolicyIdFromDB = async (id, policies, shouldReturn) => {
     _("[policies]", policies)
     _("[readPolicyIdFromDB] Try at id:", id)
 
@@ -736,6 +762,8 @@ export default class App extends Component {
     if (!risk) return
 
     const fP = this.policyFormatterLong(id, policy, risk)
+    if (shouldReturn) return fP
+
     policies.push(fP)
 
     const nexId = id + 1
