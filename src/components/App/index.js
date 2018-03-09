@@ -94,7 +94,8 @@ export default class App extends Component {
 
   componentDidMount() {
     // Update Contract Instance
-    this.updateContractInstance()
+    const cb = this.getPoliciesFromDb
+    this.updateContractInstance(cb)
     this.wait(this.getBalance)
   }
 
@@ -412,17 +413,31 @@ export default class App extends Component {
 
     // Turn off pending
     this.setState({ pending: false })
+    const { policies: curr, fullName, email } = this.state
 
+    const draft = {
+      policyId: +moment().format("X"),
+      carrierFlightNumber,
+      departureDate,
+      departureTime,
+      arrivalTime,
+      fullName,
+      email,
+      premium
+    }
+
+    this.setState({ policies: [...curr, draft] })
+
+    // Ok watch envent on txHash
     const event = await this.checkPolicyAppliedOrDeclineByEvent(txHash)
-    if (!event) return _("No LogPolicyApplied")
+    if (!event) return
 
     const e1 = event
     const { args } = e1
     const { _policyId } = args
-    const { fullName, email } = this.state
 
     const certificate = {
-      policyId: fdHash.encode(_policyId),
+      policyId: _policyId.toString(),
       carrierFlightNumber,
       departureDate,
       departureTime,
@@ -431,11 +446,32 @@ export default class App extends Component {
       email
     }
 
-    _("[createNewPolicy][certificate]", certificate)
+    this.setState({ policies: [...curr, certificate] })
 
-    // Update Policies
-    const { policies: curr } = this.state
-    const policies = [...curr, certificate]
+    // const event = await this.checkPolicyAppliedOrDeclineByEvent(txHash)
+    // _("[]")
+    // if (!event) return _("No LogPolicyApplied")
+    //
+    // const e1 = event
+    // const { args } = e1
+    // const { _policyId } = args
+    // const { fullName, email } = this.state
+    //
+    // const certificate = {
+    //   policyId: fdHash.encode(_policyId),
+    //   carrierFlightNumber,
+    //   departureDate,
+    //   departureTime,
+    //   arrivalTime,
+    //   fullName,
+    //   email
+    // }
+    //
+    // _("[createNewPolicy][certificate]", certificate)
+    //
+    // // Update Policies
+    // const { policies: curr } = this.state
+    // const policies = [...curr, certificate]
     // this.setState({ policies })
   }
 
@@ -458,7 +494,7 @@ export default class App extends Component {
             _(err.message)
             return resolve(null)
           }
-
+          _("[checkPolicyAppliedOrDeclineByEvent][LogPolicyApplied][event]", result)
           resolve(result)
         })
       })
@@ -551,12 +587,13 @@ export default class App extends Component {
   }
 
   openPolicyDetailDialog = policy => () => {
-    this.setState({ dialogData: { policy } }, () => {
-      this.handleOpen()
-    })
+    this.setState({ dialogData: { policy } }, this.handleOpen)
   }
 
-  renderDialogContent = policy => {
+  renderDialogContent = () => {
+    const { dialogData } = this.state
+    const policy = dialogData && dialogData.policy
+    _("[renderDialogContent][policy]", policy)
     if (!policy) return null
 
     const {
@@ -568,6 +605,8 @@ export default class App extends Component {
       arrivalTime,
       actualDelayInMinutes = ""
     } = policy
+
+    const departureTimeTitle = isNaN(departureTime) ? departureTime : moment(departureTime, "X").format("HH:mm")
 
     return (
       <div>
@@ -585,7 +624,7 @@ export default class App extends Component {
             </TableRow>
             <TableRow>
               <TableRowColumn>Full Name</TableRowColumn>
-              <TableRowColumn>{fullName}</TableRowColumn>
+              <TableRowColumn>{fullName || ""}</TableRowColumn>
             </TableRow>
             <TableRow>
               <TableRowColumn>Carrier Flight Number</TableRowColumn>
@@ -597,7 +636,7 @@ export default class App extends Component {
             </TableRow>
             <TableRow>
               <TableRowColumn>Departure Time</TableRowColumn>
-              <TableRowColumn>{moment(departureTime, "X").format("HH:mm")}</TableRowColumn>
+              <TableRowColumn>{departureTimeTitle}</TableRowColumn>
             </TableRow>
             {/*<TableRow>*/}
             {/*<TableRowColumn>Departure Time</TableRowColumn>*/}
@@ -621,7 +660,7 @@ export default class App extends Component {
     )
   }
 
-  policyFormatterLong = (policyId, _policy, _risk) => {
+  policyFormatterLong = (_policyId, _policy, _risk) => {
     const statusToString = status => {
       const sts = {
         0: "Applied",
@@ -645,7 +684,7 @@ export default class App extends Component {
     }
 
     const frontendP = {
-      policyId,
+      policyId: fdHash.encode(_policyId),
       customer: _policy[0],
       state: statusToString(_policy[6].toNumber()),
       premium: web3.fromWei(_policy[1]).toFixed(2),
@@ -653,7 +692,7 @@ export default class App extends Component {
       weight: _policy[3].toFixed(0),
       calculatedPayout: web3.fromWei(_policy[4]).toFixed(2),
       actualPayout: web3.fromWei(_policy[5]).toFixed(2),
-      stateTime: new Date(_policy[7].toNumber() * 1000).toLocaleString("de"),
+      departureTime: new Date(_policy[7].toNumber() * 1000).toLocaleString("de"),
       stateMessage: Buffer.from(_policy[8].slice(2), "hex")
         .toString()
         .replace(/\0/g, ""),
@@ -664,11 +703,11 @@ export default class App extends Component {
       carrierFlightNumber: Buffer(_risk[0].slice(2), "hex")
         .toString()
         .replace(/\0/g, ""),
-      departureYearMonthDay: Buffer(_risk[1].slice(2), "hex")
+      departureDate: Buffer(_risk[1].slice(2), "hex")
         .toString()
         .replace(/\0/g, ""),
       arrivalTime: new Date(_risk[2].toNumber() * 1000).toLocaleString(),
-      delayInMinutes: _risk[3].toNumber(),
+      actualDelayInMinutes: _risk[3].toNumber(),
       delay: _risk[4].toNumber(),
       cumulatedWeightedPremium: web3.fromWei(_risk[5]).toFixed(2),
       premiumMultiplier: _risk[6].toFixed(2)
@@ -678,10 +717,11 @@ export default class App extends Component {
     return frontendP
   }
 
-  readPolicyIdFromDB = async id => {
+  readPolicyIdFromDB = async (id, policies) => {
+    _("[policies]", policies)
     _("[readPolicyIdFromDB] Try at id:", id)
 
-    const { FD_Db, policies } = this.state
+    const { FD_Db } = this.state
 
     const policy = await new Promise((resolve, reject) =>
       FD_Db.policies(id, (e, p) => (e || !p ? resolve(null) : resolve(p)))
@@ -695,21 +735,25 @@ export default class App extends Component {
     if (!risk) return
 
     const fP = this.policyFormatterLong(id, policy, risk)
-    const nexId = id + 1
+    policies.push(fP)
 
-    return this.readPolicyIdFromDB(nexId)
+    const nexId = id + 1
+    return this.readPolicyIdFromDB(nexId, policies)
   }
 
   getPoliciesFromDb = async () => {
+    const policies = []
     try {
       const { FD_Db } = this.state
       _("[FD_Db]", FD_Db)
 
       const startId = 0
-      await this.readPolicyIdFromDB(startId)
+      await this.readPolicyIdFromDB(startId, policies)
       _("[getPoliciesFromDb] Loop finished")
     } catch (err) {
       _("[getPoliciesFromDb] Setup loop fail")
+    } finally {
+      this.setState({ policies })
     }
   }
 
@@ -739,11 +783,8 @@ export default class App extends Component {
       fakeFlight,
       fakeDelayInMinutes,
       openCertificate,
-      dialogData,
       openDebugMoreTools
     } = this.state
-
-    const dialogPolicy = dialogData && dialogData.policy
 
     const selectAirports = demoAirports.map(airport => {
       const { name, code } = airport
@@ -830,14 +871,14 @@ export default class App extends Component {
                       const cb = this.showPolicyDelayColor(policyId)
                       const flightTlObj = { departureTime, arrivalTime, cb }
 
-                      console.log(actualDelayInMinutes)
-                      const itemStyle = s.getItemStyle(actualDelayInMinutes)
-                      console.log("[itemStyle]", itemStyle)
+                      const itemStyle = s.getItemStyle(actualDelayInMinutes, policyId)
+                      // _("[itemStyle]", itemStyle)
+                      const policyIdTitle = policyId > 15000 ? "Draft" : fdHash.encode(policyId)
 
                       return (
                         <ListItem
                           key={policyId}
-                          primaryText={policyId}
+                          primaryText={policyIdTitle}
                           secondaryText={policyBrief}
                           leftIcon={<AssignMent />}
                           style={itemStyle}
@@ -1044,7 +1085,7 @@ export default class App extends Component {
             open={openCertificate}
             onRequestClose={this.handleClose}
           >
-            {this.renderDialogContent(dialogPolicy)}
+            {this.renderDialogContent()}
           </Dialog>
         </div>
       </MuiThemeProvider>

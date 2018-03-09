@@ -1,4 +1,4 @@
-import { cyan50 as late15C, cyan100 as late30C, cyan200 as late45C } from "material-ui/styles/colors"
+import { cyan50 as late15C, cyan100 as late30C, cyan200 as late45C, grey200 as draftC } from "material-ui/styles/colors"
 
 const _0px = 0
 const _5px = 5
@@ -121,9 +121,10 @@ export const style = {
     position: "relative",
     display: "inline-block"
   },
-  getItemStyle: delayMinute => {
+  getItemStyle: (delayMinute, policyId) => {
     const defaultS = {
-      margin: `${_10px} 0`
+      margin: `${_10px} 0`,
+      backgroundColor: policyId > 15000 ? draftC : null
     }
 
     if (!delayMinute) return { ...{}, ...defaultS }
