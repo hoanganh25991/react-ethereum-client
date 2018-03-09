@@ -54,8 +54,8 @@ export default class App extends Component {
 
       // Config
       mockServerUrl,
-      newPolicyAddress: "0x29f70a7278dc2dfdce8767cf8302f22fea4191dc",
-      ledgerAddress: "0xd9a40b118f944bd5885da4e163fbfdda14707ffb",
+      newPolicyAddress: "0x09046d89cd80ef8dae2f9e6fe5702443c766020d",
+      ledgerAddress: "0x7ebe9c2c498e88668f9419ec020d2107122009a6",
 
       // Dialog
       openCertificate: false,
@@ -108,7 +108,7 @@ export default class App extends Component {
     setTimeout(cb, 1000)
   }
 
-  updateContractInstance = () => {
+  updateContractInstance = (cb = null) => {
     const { newPolicyAddress, ledgerAddress } = this.state
 
     const { abi: newPolicyAbi } = FD_NewPolicyJson
@@ -124,6 +124,7 @@ export default class App extends Component {
 
     this.setState({ FD_NewPolicy, FD_Ledger }, () => {
       this.watchBalance()
+      if (cb) cb()
     })
   }
 
@@ -504,8 +505,12 @@ export default class App extends Component {
     this.getBalance()
   }
 
-  updateConfig = () => {
-    this.updateContractInstance()
+  updateContact = () => {
+    const cb = () => {
+      window.alert("Update success")
+      this.getBalance()
+    }
+    this.updateContractInstance(cb)
   }
 
   readAccountBalance = () => {
@@ -871,7 +876,7 @@ export default class App extends Component {
 
                   <div style={s.applyBtnDiv}>
                     <div style={s.applySpaceDiv} />
-                    <RaisedButton label={"Update contract"} primary={true} onClick={this.updateConfig} />
+                    <RaisedButton label={"Update contract"} primary={true} onClick={this.updateContact} />
                   </div>
                 </Paper>
 
