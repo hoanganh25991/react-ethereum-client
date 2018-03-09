@@ -684,7 +684,7 @@ export default class App extends Component {
     }
 
     const frontendP = {
-      policyId: fdHash.encode(_policyId),
+      policyId: _policyId.toString(),
       customer: _policy[0],
       state: statusToString(_policy[6].toNumber()),
       premium: web3.fromWei(_policy[1]).toFixed(2),
@@ -783,7 +783,8 @@ export default class App extends Component {
       fakeFlight,
       fakeDelayInMinutes,
       openCertificate,
-      openDebugMoreTools
+      openDebugMoreTools,
+      dbAddress
     } = this.state
 
     const selectAirports = demoAirports.map(airport => {
@@ -867,7 +868,8 @@ export default class App extends Component {
                         actualDelayInMinutes = ""
                       } = policy
 
-                      const policyBrief = `${fullName}-${carrierFlightNumber}-${departureDate}-delay: ${actualDelayInMinutes} min`
+                      const policyBrief = `${fullName ||
+                        ""}-${carrierFlightNumber}-${departureDate}-delay: ${actualDelayInMinutes} min`
                       const cb = this.showPolicyDelayColor(policyId)
                       const flightTlObj = { departureTime, arrivalTime, cb }
 
@@ -1008,7 +1010,13 @@ export default class App extends Component {
                       onChange={this.storeTextField("ledgerAddress")}
                     />
                   </div>
-
+                  <div>
+                    <TextField
+                      floatingLabelText={"Contract Database Address"}
+                      value={dbAddress}
+                      onChange={this.storeTextField("dbAddress")}
+                    />
+                  </div>
                   <div style={s.applyBtnDiv}>
                     <div style={s.applySpaceDiv} />
                     <RaisedButton label={"Update contract"} primary={true} onClick={this.updateContact} />
